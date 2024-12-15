@@ -123,6 +123,25 @@
 
         }
 
+        .course-link {
+            color: #0366d6;
+            text-decoration: none;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .course-link:hover {
+            text-decoration: underline;
+        }
+
+        /* 添加一个小图标表示这是外部链接 */
+        .course-link::after {
+            content: "↗️";
+            font-size: 0.8em;
+            margin-left: 4px;
+            opacity: 0.7;
+        }
+
         #scheduleTable td.active {
             background-color: #ffd700;
             /* 高亮颜色 */
@@ -666,7 +685,7 @@
             }
 
             renderTable() {
-                this.showLoading(); // 显示加载提示
+                this.showLoading();
 
                 const tbody = document.getElementById("courseTable").querySelector("tbody");
                 tbody.innerHTML = "";
@@ -674,22 +693,32 @@
                 setTimeout(() => {
                     this.filteredData.forEach(item => {
                         const row = document.createElement("tr");
-                        row.innerHTML = `
-                        <td data-title="${item.courseId}">${item.courseId}</td>
-                        <td data-title="${item.courseName}">${item.courseName}</td>
-                        <td data-title="${item.weeklyHours}">${item.weeklyHours}</td>
-                        <td data-title="${item.leader}">${item.leader}</td>
-                        <td data-title="${item.teachers}">${item.teachers}</td>
-                        <td data-title="${item.courseNature}">${item.courseNature}</td>
-                        <td data-title="${item.language}">${item.language}</td>
-                        <td data-title="${item.campus}">${item.campus}</td>
-                        <td data-title="${item.department}">${item.department}</td>
-                        <td data-title="${item.auditInfo}">${item.auditInfo}</td>
-                        <td data-title="${item.schedule}">${item.schedule}</td>
-                    `;
+                        // 创建一个包含所有单元格的数组，特殊处理课程名称单元格
+                        const cells = [
+                            `<td data-title="${item.courseId}">${item.courseId}</td>`,
+                            `<td data-title="${item.courseName}">
+                    <a href="https://1.tongji.icu/search?q=${encodeURIComponent(item.courseName)}" 
+                       class="course-link" 
+                       target="_blank" 
+                       title="点击查看课程详情">
+                        ${item.courseName}
+                    </a>
+                </td>`,
+                            `<td data-title="${item.weeklyHours}">${item.weeklyHours}</td>`,
+                            `<td data-title="${item.leader}">${item.leader}</td>`,
+                            `<td data-title="${item.teachers}">${item.teachers}</td>`,
+                            `<td data-title="${item.courseNature}">${item.courseNature}</td>`,
+                            `<td data-title="${item.language}">${item.language}</td>`,
+                            `<td data-title="${item.campus}">${item.campus}</td>`,
+                            `<td data-title="${item.department}">${item.department}</td>`,
+                            `<td data-title="${item.auditInfo}">${item.auditInfo}</td>`,
+                            `<td data-title="${item.schedule}">${item.schedule}</td>`
+                        ];
+
+                        row.innerHTML = cells.join('');
                         tbody.appendChild(row);
                     });
-                    this.hideLoading(); // 渲染完成后隐藏加载提示
+                    this.hideLoading();
                 }, 0);
             }
 
