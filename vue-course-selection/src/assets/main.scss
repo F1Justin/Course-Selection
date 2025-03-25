@@ -21,6 +21,10 @@ html, body {
   font-size: 16px;
   color: var(--text-color);
   background-color: var(--surface-ground);
+  /* 添加全局缩放，解决Vercel环境中显示过大的问题 */
+  transform: scale(0.95);
+  transform-origin: top left;
+  width: 105.26%; /* 100/0.95 ≈ 105.26% 补偿缩放导致的宽度减少 */
 }
 
 .container {

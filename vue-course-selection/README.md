@@ -1,6 +1,6 @@
 # 课程展示与筛选系统
 
-这是一个基于Vue 3和Element Plus的现代化课程信息展示与筛选系统。该系统提供了友好的用户界面，允许用户通过多种条件筛选课程信息，包括课程性质、校区、开课学院以及课程时间安排等。
+这是一个基于Vue 3和PrimeVue的现代化课程信息展示与筛选系统。该系统提供了友好的用户界面，允许用户通过多种条件筛选课程信息，包括课程性质、校区、开课学院以及课程时间安排等。
 
 ## 功能特点
 
@@ -13,11 +13,11 @@
 
 ## 技术栈
 
-- **前端框架**: Vue 3 (Composition API)
-- **UI组件库**: Element Plus
+- **前端框架**: Vue.3.3+ (Composition API)
+- **UI组件库**: PrimeVue 3.53+
 - **状态管理**: Pinia
 - **构建工具**: Vite
-- **样式**: SCSS
+- **样式**: SCSS + PrimeFlex
 
 ## 开发
 
@@ -60,6 +60,11 @@ npm run preview
 ## 部署
 
 该项目可以部署到任何静态网站托管服务，如Vercel、Netlify、GitHub Pages等。只需执行构建命令，然后部署生成的`dist`目录即可。
+
+## 在线演示
+
+项目已部署到Vercel，可访问以下链接：
+- [课程展示与筛选系统 - PrimeVue版](https://course-selection-2hqn0na4d-f1justins-projects.vercel.app)
 
 ## 许可证
 

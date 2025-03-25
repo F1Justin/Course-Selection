@@ -6,7 +6,7 @@
 
 原始项目已重构为Vue.js版本，位于 `vue-course-selection` 目录下。新版本提供了以下改进：
 
-- 使用Vue 3 + Element Plus构建的现代化界面
+- 使用Vue 3 + PrimeVue构建的现代化界面
 - 组件化设计，更好的代码组织和可维护性
 - 响应式布局，适配不同设备屏幕
 - 深色模式支持
@@ -16,7 +16,7 @@
 
 项目已部署到Vercel，可通过以下链接访问：
 
-- [课程展示与筛选系统](https://course-selection.vercel.app)
+- [课程展示与筛选系统 - PrimeVue版](https://course-selection-2hqn0na4d-f1justins-projects.vercel.app)
 
 ## 如何使用
 

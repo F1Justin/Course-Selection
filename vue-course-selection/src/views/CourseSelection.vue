@@ -9,7 +9,7 @@
         <div class="logo">
           <div class="title-container">
             <h1>通济 - 选课系统</h1>
-            <p>简单、高效的课程筛选工具</p>
+            <p>为苦于1系统全校课表的人准备的课程筛选工具</p>
           </div>
         </div>
       </header>
