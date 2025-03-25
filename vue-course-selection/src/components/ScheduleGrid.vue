@@ -1,38 +1,53 @@
 <template>
   <div class="schedule-grid">
-    <el-card shadow="hover">
-      <template #header>
+    <Card>
+      <template #title>
         <div class="schedule-header">
-          <h3>按时间筛选</h3>
-          <el-button type="primary" plain @click="resetSchedule" :disabled="!hasActiveCell">
-            重置时间筛选
-          </el-button>
+          <h3 class="schedule-title">按时间筛选</h3>
+          <Button 
+            label="重置时间筛选" 
+            outlined 
+            @click="resetSchedule" 
+            :disabled="!hasActiveCell"
+            class="p-button-sm"
+          />
         </div>
       </template>
       
-      <div class="schedule-table-container">
-        <el-table :data="scheduleData" border style="width: 100%" :cell-class-name="getCellClass">
-          <el-table-column prop="time" label="时间段" width="100" align="center" />
-          <el-table-column v-for="day in days" :key="day.value" :label="day.label" align="center">
-            <template #default="scope">
-              <div 
-                class="schedule-cell" 
-                @click="selectTimeSlot(day.value, scope.row.slot)"
-                :class="{ 'is-active': isActive(day.value, scope.row.slot) }"
-              >
-                <span>&nbsp;</span>
-              </div>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-    </el-card>
+      <template #content>
+        <div class="schedule-table-container">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>时间段</th>
+                <th v-for="day in days" :key="day.value">{{ day.label }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="slot in scheduleData" :key="slot.slot">
+                <td>{{ slot.time }}</td>
+                <td
+                  v-for="day in days"
+                  :key="`${day.value}-${slot.slot}`"
+                  :class="['schedule-cell', { 'active': isActive(day.value, slot.slot) }]"
+                  @click="selectTimeSlot(day.value, slot.slot)"
+                >
+                  &nbsp;
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </template>
+    </Card>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import { useCourseStore } from '@/store/courseStore';
+import Card from 'primevue/card';
+import Button from 'primevue/button';
 
 const courseStore = useCourseStore();
 const filters = computed(() => courseStore.filters);
@@ -63,16 +78,6 @@ function isActive(day, time) {
   return filters.value.scheduleDay === day && filters.value.scheduleTime === time;
 }
 
-function getCellClass({ row, column, rowIndex, columnIndex }) {
-  // 第一列是时间标签，不需要特殊处理
-  if (columnIndex === 0) return '';
-  
-  // 计算对应的日期值（星期几）
-  const day = columnIndex; // columnIndex从1开始，正好对应days的索引+1
-  
-  return isActive(day, row.slot) ? 'active-cell' : '';
-}
-
 function selectTimeSlot(day, time) {
   // 如果点击已选中的单元格，则取消选择
   if (isActive(day, time)) {
@@ -92,55 +97,76 @@ function resetSchedule() {
 
 <style scoped>
 .schedule-grid {
-  margin-bottom: 20px;
+  margin-bottom: 0;
+  height: 100%;
 }
 
 .schedule-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
-.schedule-header h3 {
+.schedule-title {
   margin: 0;
-  color: var(--text-primary);
+  font-size: 1.2rem;
+  color: var(--text-color);
 }
 
-.schedule-table-container {
-  overflow-x: auto;
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.schedule-table th,
+.schedule-table td {
+  border: 1px solid var(--surface-border);
+  text-align: center;
+  padding: 0.5rem 0.3rem;
+  font-size: 0.85rem;
+}
+
+.schedule-table th {
+  background-color: var(--surface-ground);
+  color: var(--text-color);
+  font-weight: 600;
 }
 
 .schedule-cell {
-  height: 30px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s;
+  transition: background-color 0.2s;
 }
 
 .schedule-cell:hover {
-  background-color: #f0f7ff;
+  background-color: var(--surface-hover);
 }
 
-.schedule-cell.is-active {
+.schedule-cell.active {
   background-color: var(--primary-color);
-  color: white;
-  font-weight: bold;
+  color: var(--primary-color-text);
 }
 
-:deep(.active-cell) {
-  background-color: var(--primary-color);
-  color: white;
+:deep(.p-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-:deep(.el-table--enable-row-hover .el-table__body tr:hover .active-cell) {
-  background-color: var(--primary-color) !important;
+:deep(.p-card-body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.p-card-content) {
+  flex: 1;
+  padding-top: 0;
 }
 
 @media (prefers-color-scheme: dark) {
   .schedule-cell:hover {
-    background-color: #18222c;
+    background-color: rgba(255, 255, 255, 0.08);
   }
 }
 </style> 

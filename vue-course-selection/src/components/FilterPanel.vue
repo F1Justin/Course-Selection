@@ -1,79 +1,142 @@
 <template>
   <div class="filter-panel">
-    <el-card shadow="hover">
-      <template #header>
+    <Card>
+      <template #title>
         <div class="filter-header">
-          <h3>筛选条件</h3>
+          <h3 class="filter-title">筛选条件</h3>
         </div>
       </template>
       
-      <el-form :model="filters" label-width="80px" @submit.prevent>
-        <el-form-item label="课程性质">
-          <el-select v-model="filters.courseNature" clearable placeholder="选择课程性质" style="width: 100%">
-            <el-option value="" label="全部"></el-option>
-            <el-option value="选修课合集" label="选修课合集"></el-option>
-            <el-option 
-              v-for="nature in filterOptions.courseNatures" 
-              :key="nature" 
-              :label="nature" 
-              :value="nature">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        
-        <el-form-item label="校区">
-          <el-select v-model="filters.campus" clearable placeholder="选择校区" style="width: 100%">
-            <el-option value="" label="全部"></el-option>
-            <el-option 
-              v-for="campus in filterOptions.campuses" 
-              :key="campus" 
-              :label="campus" 
-              :value="campus">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        
-        <el-form-item label="开课学院">
-          <el-select v-model="filters.department" clearable placeholder="选择开课学院" style="width: 100%">
-            <el-option value="" label="全部"></el-option>
-            <el-option 
-              v-for="dept in filterOptions.departments" 
-              :key="dept" 
-              :label="dept" 
-              :value="dept">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        
-        <el-form-item label="搜索">
-          <el-input
-            v-model="filters.search"
-            placeholder="搜索课程信息..."
-            clearable
-            :prefix-icon="Search"
-            @input="debounceSearch"
-          />
-        </el-form-item>
-        
-        <el-form-item>
-          <el-button type="primary" @click="applyFilters" :loading="loading" style="width: 100%">
-            筛选
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+      <template #content>
+        <div class="p-fluid">
+          <div class="filter-item">
+            <label class="filter-label" for="courseNature">课程性质</label>
+            <Dropdown 
+              id="courseNature"
+              v-model="filters.courseNature" 
+              :options="courseNatureOptions" 
+              optionLabel="label" 
+              optionValue="value" 
+              placeholder="选择课程性质"
+              class="w-full"
+              :showClear="true"
+              :panelStyle="{ 'max-height': '400px', 'overflow-y': 'auto' }"
+              :filter="true"
+              filterPlaceholder="搜索课程性质..."
+              :virtualScrollerOptions="{ itemSize: 38 }"
+            />
+          </div>
+          
+          <div class="filter-item">
+            <label class="filter-label" for="campus">校区</label>
+            <Dropdown 
+              id="campus"
+              v-model="filters.campus" 
+              :options="campusOptions" 
+              optionLabel="label" 
+              optionValue="value" 
+              placeholder="选择校区"
+              class="w-full"
+              :showClear="true"
+              :panelStyle="{ 'max-height': '400px', 'overflow-y': 'auto' }"
+              :filter="true"
+              filterPlaceholder="搜索校区..."
+              :virtualScrollerOptions="{ itemSize: 38 }"
+            />
+          </div>
+          
+          <div class="filter-item">
+            <label class="filter-label" for="department">开课学院</label>
+            <Dropdown 
+              id="department"
+              v-model="filters.department" 
+              :options="departmentOptions" 
+              optionLabel="label" 
+              optionValue="value" 
+              placeholder="选择开课学院"
+              class="w-full"
+              :showClear="true"
+              :panelStyle="{ 'max-height': '400px', 'overflow-y': 'auto' }"
+              :filter="true"
+              filterPlaceholder="搜索开课学院..."
+              :virtualScrollerOptions="{ itemSize: 38 }"
+            />
+          </div>
+          
+          <div class="filter-item">
+            <label class="filter-label" for="search">搜索</label>
+            <span class="p-input-icon-left w-full search-input">
+              <i class="pi pi-search" />
+              <InputText 
+                id="search"
+                v-model="filters.search" 
+                placeholder="搜索课程信息..." 
+                class="w-full"
+                @input="debounceSearch" 
+              />
+            </span>
+          </div>
+          
+          <div class="filter-actions">
+            <Button 
+              label="应用筛选" 
+              icon="pi pi-filter" 
+              @click="applyFilters" 
+              :loading="loading"
+            />
+          </div>
+        </div>
+      </template>
+    </Card>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useCourseStore } from '@/store/courseStore';
-import { Search } from '@element-plus/icons-vue';
+import Card from 'primevue/card';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
 
 const courseStore = useCourseStore();
 const loading = computed(() => courseStore.loading);
 const filters = computed(() => courseStore.filters);
 const filterOptions = computed(() => courseStore.filterOptions);
+
+// 转换选项格式为PrimeVue组件所需的格式
+const courseNatureOptions = computed(() => {
+  const options = [
+    { label: '全部', value: '' },
+    { label: '选修课合集', value: '选修课合集' }
+  ];
+  
+  filterOptions.value.courseNatures?.forEach(nature => {
+    options.push({ label: nature, value: nature });
+  });
+  
+  return options;
+});
+
+const campusOptions = computed(() => {
+  const options = [{ label: '全部', value: '' }];
+  
+  filterOptions.value.campuses?.forEach(campus => {
+    options.push({ label: campus, value: campus });
+  });
+  
+  return options;
+});
+
+const departmentOptions = computed(() => {
+  const options = [{ label: '全部', value: '' }];
+  
+  filterOptions.value.departments?.forEach(dept => {
+    options.push({ label: dept, value: dept });
+  });
+  
+  return options;
+});
 
 // 防抖搜索
 let searchTimer = null;
@@ -100,17 +163,83 @@ watch(() => [filters.value.courseNature, filters.value.campus, filters.value.dep
 
 <style scoped>
 .filter-panel {
-  margin-bottom: 20px;
+  margin-bottom: 0;
+  height: 100%;
 }
 
 .filter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
-.filter-header h3 {
+.filter-title {
   margin: 0;
-  color: var(--text-primary);
+  font-size: 1.2rem;
+  color: var(--text-color);
+}
+
+.filter-item {
+  margin-bottom: 1rem;
+}
+
+.filter-item:last-child {
+  margin-bottom: 0;
+}
+
+.filter-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.search-input {
+  margin-bottom: 1rem;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+:deep(.p-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.p-card-body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.p-card-content) {
+  flex: 1;
+  padding-top: 0;
+}
+
+:deep(.p-dropdown-panel .p-dropdown-items) {
+  padding: 0.5rem 0;
+}
+
+:deep(.p-dropdown-item) {
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+}
+
+:deep(.p-dropdown-panel) {
+  max-height: 70vh !important;
+}
+
+:deep(.p-dropdown-items-wrapper) {
+  max-height: 60vh !important;
+}
+
+:deep(.p-dropdown-filter-container) {
+  padding: 0.5rem;
 }
 </style> 

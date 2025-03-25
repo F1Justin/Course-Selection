@@ -1,14 +1,44 @@
 import { createApp } from 'vue';
-import ElementPlus from 'element-plus';
-import 'element-plus/dist/index.css';
 import { createPinia } from 'pinia';
+import PrimeVue from 'primevue/config';
 import App from './App.vue';
 import './assets/main.scss';
+
+// PrimeVue样式
+import 'primevue/resources/themes/lara-light-blue/theme.css';
+import 'primevue/resources/primevue.min.css';
+import 'primeicons/primeicons.css';
+import 'primeflex/primeflex.css';
+
+// 导入常用组件
+import Button from 'primevue/button';
+import Card from 'primevue/card';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
+import Message from 'primevue/message';
+import Paginator from 'primevue/paginator';
+import ProgressSpinner from 'primevue/progressspinner';
 
 const app = createApp(App);
 const pinia = createPinia();
 
-app.use(ElementPlus, { size: 'default', zIndex: 3000 });
+app.use(PrimeVue, {
+  ripple: true,
+  inputStyle: 'filled'
+});
 app.use(pinia);
+
+// 注册全局组件
+app.component('Button', Button);
+app.component('Card', Card);
+app.component('DataTable', DataTable);
+app.component('Column', Column);
+app.component('Dropdown', Dropdown);
+app.component('InputText', InputText);
+app.component('Message', Message);
+app.component('Paginator', Paginator);
+app.component('ProgressSpinner', ProgressSpinner);
 
 app.mount('#app'); 

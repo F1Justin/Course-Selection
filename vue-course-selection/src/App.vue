@@ -1,14 +1,11 @@
 <template>
   <div class="app-container">
-    <el-config-provider :locale="zhCn">
-      <CourseSelection />
-    </el-config-provider>
+    <CourseSelection />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import zhCn from 'element-plus/dist/locale/zh-cn.mjs';
 import CourseSelection from './views/CourseSelection.vue';
 </script>
 

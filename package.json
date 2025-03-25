@@ -1,0 +1,27 @@
+{
+  "name": "course-selection",
+  "version": "1.0.0",
+  "description": "课程展示与筛选系统",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server",
+    "convert-data": "node csv-to-json.js",
+    "prepare-cf": "node prepare-kv-upload.js",
+    "deploy-cf": "wrangler publish",
+    "deploy-vercel": "vercel"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "课程",
+    "筛选",
+    "cloudflare",
+    "vercel"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+} 

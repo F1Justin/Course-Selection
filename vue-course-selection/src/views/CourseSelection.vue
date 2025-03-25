@@ -1,110 +1,184 @@
 <template>
-  <div class="course-selection">
-    <LoadingOverlay :show="isInitialLoading" />
+  <div>
+    <!-- 加载遮罩 -->
+    <LoadingOverlay :show="loading" />
     
-    <el-container class="container">
-      <el-header height="auto">
-        <div class="page-header">
-          <h1 class="page-title">课程展示与筛选系统</h1>
-          <p class="page-subtitle">轻松查找并筛选课程信息</p>
+    <div class="container">
+      <!-- 头部 -->
+      <header>
+        <div class="logo">
+          <div class="title-container">
+            <h1>通济 - 选课系统</h1>
+            <p>简单、高效的课程筛选工具</p>
+          </div>
         </div>
-      </el-header>
+      </header>
       
-      <el-main>
-        <el-row :gutter="20">
-          <el-col :xs="24" :sm="24" :md="6" :lg="6" :xl="5">
-            <FilterPanel />
-          </el-col>
-          
-          <el-col :xs="24" :sm="24" :md="18" :lg="18" :xl="19">
-            <ScheduleGrid />
-            <CourseTable />
-          </el-col>
-        </el-row>
+      <!-- 主内容区 -->
+      <main>
+        <!-- 错误提示 -->
+        <div v-if="error" class="grid">
+          <div class="col-12">
+            <Message severity="error" :closable="false">
+              <div class="error-content">
+                <i class="pi pi-exclamation-triangle" style="font-size: 1.5rem"></i>
+                <div>
+                  <h3>加载数据时出错</h3>
+                  <p>{{ error }}</p>
+                  <Button label="重试" icon="pi pi-refresh" @click="reloadData" />
+                </div>
+              </div>
+            </Message>
+          </div>
+        </div>
         
-        <el-alert
-          v-if="error"
-          :title="error"
-          type="error"
-          show-icon
-          :closable="false"
-          style="margin: 20px 0"
-        />
-      </el-main>
-      
-      <el-footer height="auto" class="footer">
-        <div class="footer-content">
-          <p>&copy; {{ currentYear }} 课程展示与筛选系统 | 基于Vue 3与Element Plus</p>
+        <!-- 筛选和课程列表 -->
+        <div class="grid filter-grid">
+          <!-- 左侧筛选面板 -->
+          <div class="col-12 md:col-5 lg:col-4 filter-panel-container">
+            <FilterPanel />
+          </div>
+          
+          <!-- 右侧时间筛选面板 -->
+          <div class="col-12 md:col-7 lg:col-8 schedule-grid-container">
+            <ScheduleGrid />
+          </div>
         </div>
-      </el-footer>
-    </el-container>
+        
+        <!-- 课程表占据全部宽度 -->
+        <div class="grid table-grid">
+          <div class="col-12 course-table-container">
+            <CourseTable />
+          </div>
+        </div>
+      </main>
+      
+      <!-- 底部 -->
+      <footer>
+        <p>© {{ new Date().getFullYear() }} 通济选课系统 | <a href="https://github.com/F1Justin/Course-Selection" target="_blank">GitHub</a></p>
+      </footer>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { onMounted, computed } from 'vue';
 import { useCourseStore } from '@/store/courseStore';
 import FilterPanel from '@/components/FilterPanel.vue';
 import ScheduleGrid from '@/components/ScheduleGrid.vue';
 import CourseTable from '@/components/CourseTable.vue';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
+import Message from 'primevue/message';
+import Button from 'primevue/button';
 
 const courseStore = useCourseStore();
+const loading = computed(() => courseStore.loading);
 const error = computed(() => courseStore.error);
-const isInitialLoading = ref(true);
-const currentYear = new Date().getFullYear();
 
-onMounted(async () => {
-  try {
-    await courseStore.loadCourses();
-  } catch (err) {
-    console.error('Failed to load courses:', err);
-  } finally {
-    setTimeout(() => {
-      isInitialLoading.value = false;
-    }, 500); // 给一个短暂的延迟，确保UI有适当的过渡
-  }
+const reloadData = () => {
+  courseStore.loadCourses();
+};
+
+onMounted(() => {
+  courseStore.loadCourses();
 });
 </script>
 
 <style scoped>
-.course-selection {
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 15px;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+}
+
+header {
+  padding: 1.5rem 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo img {
+  height: 3rem;
+}
+
+.title-container h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: var(--primary-color);
+}
+
+.title-container p {
+  margin: 0.2rem 0 0 0;
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+}
+
+main {
+  flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.container {
+.filter-grid {
+  margin-bottom: 1rem;
+  flex: 0 0 auto;
+}
+
+.table-grid {
   flex: 1;
+  display: flex;
+  margin-bottom: 0;
 }
 
-.page-header {
-  padding: 30px 0;
+.course-table-container {
+  flex: 1;
+  display: flex;
+  min-height: 500px;
 }
 
-.page-title {
-  font-size: 32px;
-  margin-bottom: 10px;
+.error-content {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.error-content h3 {
+  margin: 0 0 0.5rem 0;
+}
+
+.error-content p {
+  margin: 0 0 1rem 0;
+}
+
+footer {
+  text-align: center;
+  padding: 1rem 0;
+  margin-top: 1rem;
+  border-top: 1px solid var(--surface-border);
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+footer a {
   color: var(--primary-color);
-  text-align: center;
+  text-decoration: none;
 }
 
-.page-subtitle {
-  font-size: 16px;
-  color: var(--text-secondary);
-  text-align: center;
-  margin: 0 0 20px 0;
-}
-
-.footer {
-  margin-top: 30px;
-  padding: 20px 0;
-  border-top: 1px solid var(--border-light);
-}
-
-.footer-content {
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 14px;
+/* 确保筛选面板和时间筛选板卡高度对齐 */
+@media screen and (min-width: 768px) {
+  .filter-panel-container :deep(.p-card),
+  .schedule-grid-container :deep(.p-card) {
+    height: 100%;
+  }
 }
 </style> 

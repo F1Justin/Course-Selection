@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, reactive } from 'vue';
 
 export const useCourseStore = defineStore('courses', () => {
   // 状态
@@ -21,7 +21,7 @@ export const useCourseStore = defineStore('courses', () => {
   const loading = ref(false);
   const error = ref(null);
   const currentPage = ref(1);
-  const pageSize = ref(50);
+  const pageSize = ref(35);
   
   // 选修课类型列表
   const electiveCourseTypes = [

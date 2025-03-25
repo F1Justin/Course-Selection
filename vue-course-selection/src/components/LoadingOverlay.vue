@@ -1,7 +1,7 @@
 <template>
   <div class="loading-overlay" v-if="show">
     <div class="loading-content">
-      <el-icon class="loading-icon"><loading /></el-icon>
+      <ProgressSpinner class="loading-icon" strokeWidth="4" />
       <h3>正在加载课程数据</h3>
       <p>请耐心等待...</p>
     </div>
@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-import { Loading } from '@element-plus/icons-vue';
+import ProgressSpinner from 'primevue/progressspinner';
 
 defineProps({
   show: {
@@ -37,29 +37,23 @@ defineProps({
   text-align: center;
   padding: 30px;
   border-radius: 8px;
-  background-color: white;
-  box-shadow: var(--box-shadow);
+  background-color: var(--surface-card);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
 .loading-icon {
-  font-size: 48px;
-  color: var(--primary-color);
-  animation: rotate 1.5s linear infinite;
+  width: 70px !important;
+  height: 70px !important;
 }
 
 h3 {
   margin: 20px 0 10px;
-  color: var(--text-primary);
+  color: var(--text-color);
 }
 
 p {
   margin: 0;
-  color: var(--text-secondary);
-}
-
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  color: var(--text-color-secondary);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -68,7 +62,7 @@ p {
   }
   
   .loading-content {
-    background-color: #1d1d1d;
+    background-color: var(--surface-card);
   }
 }
 </style> 

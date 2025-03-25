@@ -1,29 +1,26 @@
 /* 全局样式 */
 :root {
-  --primary-color: #409eff;
-  --success-color: #67c23a;
-  --warning-color: #e6a23c;
-  --danger-color: #f56c6c;
-  --info-color: #909399;
-  --text-primary: #303133;
-  --text-regular: #606266;
-  --text-secondary: #909399;
-  --border-color: #dcdfe6;
-  --border-light: #e4e7ed;
-  --background-color: #f5f7fa;
-  --box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  /* PrimeVue主题颜色变量 */
+  --primary-color: #3B82F6;
+  --surface-ground: #F8F9FA;
+  --text-color: #1E293B;
+  --surface-card: #FFFFFF;
+  --text-color-secondary: #64748B;
+  --surface-border: #E2E8F0;
+  --surface-hover: #F4F4F5;
+  --font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 
+                 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
 }
 
 html, body {
   margin: 0;
   padding: 0;
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 
-               'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+  font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 16px;
-  color: var(--text-primary);
-  background-color: var(--background-color);
+  color: var(--text-color);
+  background-color: var(--surface-ground);
 }
 
 .container {
@@ -41,14 +38,14 @@ html, body {
   font-size: 28px;
   font-weight: 600;
   margin-bottom: 10px;
-  color: var(--text-primary);
+  color: var(--text-color);
 }
 
 .section {
   margin-bottom: 30px;
-  background-color: #fff;
+  background-color: var(--surface-card);
   border-radius: 8px;
-  box-shadow: var(--box-shadow);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   padding: 20px;
 }
 
@@ -56,24 +53,23 @@ html, body {
   text-align: center;
 }
 
-/* 深色模式支持 */
+/* 深色模式支持 - 手动实现，当PrimeVue切换为深色主题时会覆盖 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --text-primary: #e5eaf3;
-    --text-regular: #cfd3dc;
-    --text-secondary: #a3a6ad;
-    --border-color: #4c4d4f;
-    --border-light: #363637;
-    --background-color: #141414;
-    --box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+    --surface-ground: #121212;
+    --text-color: #f8f9fa;
+    --surface-card: #1e1e1e;
+    --text-color-secondary: #adb5bd;
+    --surface-border: #495057;
+    --surface-hover: #333333;
   }
 
   html, body {
-    background-color: #141414;
-    color: var(--text-primary);
+    background-color: var(--surface-ground);
+    color: var(--text-color);
   }
 
   .section {
-    background-color: #1d1d1d;
+    background-color: var(--surface-card);
   }
 } 
