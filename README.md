@@ -16,7 +16,7 @@
 
 项目已部署到Vercel，可通过以下链接访问：
 
-- [课程展示与筛选系统 - PrimeVue版](https://course-selection-2hqn0na4d-f1justins-projects.vercel.app)
+- [课程展示与筛选系统 - PrimeVue版](https://course.f1justin.com)
 
 ## 如何使用
 
