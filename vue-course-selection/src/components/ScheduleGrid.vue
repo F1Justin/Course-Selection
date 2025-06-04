@@ -4,13 +4,21 @@
       <template #title>
         <div class="schedule-header">
           <h3 class="schedule-title">按时间筛选</h3>
-          <Button 
-            label="重置时间筛选" 
-            outlined 
-            @click="resetSchedule" 
-            :disabled="!hasActiveCell"
-            class="p-button-sm"
-          />
+          <div class="actions-container">
+            <Button 
+              :label="showAllTimeCategories ? '仅显示常用' : '显示所有时段'" 
+              text 
+              @click="toggleShowAllTimeCategories" 
+              class="p-button-sm p-button-secondary" 
+            />
+            <Button 
+              label="重置时间筛选" 
+              outlined 
+              @click="resetSchedule" 
+              :disabled="!hasActiveCell"
+              class="p-button-sm"
+            />
+          </div>
         </div>
       </template>
       
@@ -23,18 +31,29 @@
                 <th v-for="day in days" :key="day.value">{{ day.label }}</th>
               </tr>
             </thead>
-            <tbody>
-              <tr v-for="slot in scheduleData" :key="slot.slot">
-                <td>{{ slot.time }}</td>
+            <template v-for="category in categorizedScheduleData" :key="category.title">
+              <tr class="category-header-row" v-if="category.slots.length > 0">
+                <td :colspan="days.length + 1" class="category-header">{{ category.title }}</td>
+              </tr>
+              <tr v-for="item in category.slots" :key="item.slot">
+                <td>{{ item.time }}</td>
                 <td
                   v-for="day in days"
-                  :key="`${day.value}-${slot.slot}`"
-                  :class="['schedule-cell', { 'active': isActive(day.value, slot.slot) }]"
-                  @click="selectTimeSlot(day.value, slot.slot)"
+                  :key="`${day.value}-${item.slot}`"
+                  :class="[
+                    'schedule-cell',
+                    { 'active': isActive(day.value, item.slot) },
+                    { 'disabled-cell': !hasCoursesInCell(day.value, item.slot) }
+                  ]"
+                  @click="hasCoursesInCell(day.value, item.slot) ? selectTimeSlot(day.value, item.slot) : null"
                 >
-                  &nbsp;
+                  <span v-if="hasCoursesInCell(day.value, item.slot)">&nbsp;</span>
+                  <span v-else class="disabled-marker">-</span>
                 </td>
               </tr>
+            </template>
+            <tbody v-if="!categorizedScheduleData || categorizedScheduleData.length === 0">
+                <tr><td :colspan="days.length + 1" style="text-align: center; padding: 1rem;">正在加载或无可用时间段...</td></tr>
             </tbody>
           </table>
         </div>
@@ -51,6 +70,10 @@ import Button from 'primevue/button';
 
 const courseStore = useCourseStore();
 const filters = computed(() => courseStore.filters);
+const filterOptions = computed(() => courseStore.filterOptions);
+const scheduleCellCourseCounts = computed(() => courseStore.scheduleCellCourseCounts);
+
+const showAllTimeCategories = ref(false);
 
 const days = [
   { value: 1, label: '星期一' },
@@ -62,24 +85,79 @@ const days = [
   { value: 7, label: '星期日' }
 ];
 
-const scheduleData = [
-  { time: '1-2节', slot: '1-2' },
-  { time: '3-4节', slot: '3-4' },
-  { time: '5-6节', slot: '5-6' },
-  { time: '7-8节', slot: '7-8' },
-  { time: '10-11节', slot: '10-11' }
-];
+const categorizedScheduleData = computed(() => {
+  const allSlots = filterOptions.value.timeSlots;
+  if (!allSlots || allSlots.length === 0) {
+    return [];
+  }
+
+  const commonTwoSessionSlots = ["1-2", "3-4", "5-6", "7-8", "9-10", "10-11", "12-13"];
+
+  let categoriesDefinition = {
+    common: { title: '常用 (2节课)', slots: [], order: 1 },
+    ...(showAllTimeCategories.value && {
+      single: { title: '单节课', slots: [], order: 2 },
+      triple: { title: '3节课', slots: [], order: 3 },
+      quadPlus: { title: '4节及以上', slots: [], order: 4 },
+      other: { title: '其他时段', slots: [], order: 5 }
+    })
+  };
+
+  const consumedSlots = new Set();
+
+  commonTwoSessionSlots.forEach(s => {
+    if (allSlots.includes(s)) {
+      categoriesDefinition.common.slots.push({ time: `${s}节`, slot: s });
+      consumedSlots.add(s);
+    }
+  });
+
+  if (showAllTimeCategories.value) {
+    allSlots.forEach(s => {
+      if (consumedSlots.has(s)) return;
+      const parts = s.split('-');
+      let categoryKey = 'other';
+      if (parts.length === 2) {
+          const start = parseInt(parts[0]);
+          const end = parseInt(parts[1]);
+          if (!isNaN(start) && !isNaN(end)) {
+              const duration = end - start + 1;
+              if (duration === 1) categoryKey = 'single';
+              else if (duration === 3) categoryKey = 'triple';
+              else if (duration >= 4) categoryKey = 'quadPlus';
+          }
+      }
+      if (categoriesDefinition[categoryKey]) {
+        categoriesDefinition[categoryKey].slots.push({ time: `${s}节`, slot: s });
+      }
+      consumedSlots.add(s);
+    });
+  }
+  
+  return Object.values(categoriesDefinition)
+    .filter(cat => cat.slots && cat.slots.length > 0)
+    .sort((a, b) => a.order - b.order);
+});
+
+function hasCoursesInCell(dayIndex, timeSlot) {
+  return (scheduleCellCourseCounts.value[dayIndex]?.[timeSlot] || 0) > 0;
+}
 
 const hasActiveCell = computed(() => {
-  return filters.value.scheduleDay !== null && filters.value.scheduleTime !== null;
+  return filters.value.scheduleDay !== null && 
+         filters.value.scheduleTime !== null &&
+         hasCoursesInCell(filters.value.scheduleDay, filters.value.scheduleTime);
 });
 
 function isActive(day, time) {
-  return filters.value.scheduleDay === day && filters.value.scheduleTime === time;
+  return filters.value.scheduleDay === day && 
+         filters.value.scheduleTime === time && 
+         hasCoursesInCell(day, time);
 }
 
 function selectTimeSlot(day, time) {
-  // 如果点击已选中的单元格，则取消选择
+  if (!hasCoursesInCell(day, time)) return;
+
   if (isActive(day, time)) {
     resetSchedule();
     return;
@@ -92,6 +170,10 @@ function selectTimeSlot(day, time) {
 
 function resetSchedule() {
   courseStore.resetScheduleFilter();
+}
+
+function toggleShowAllTimeCategories() {
+  showAllTimeCategories.value = !showAllTimeCategories.value;
 }
 </script>
 
@@ -125,6 +207,8 @@ function resetSchedule() {
   text-align: center;
   padding: 0.5rem 0.3rem;
   font-size: 0.85rem;
+  min-height: 2.5em;
+  box-sizing: border-box;
 }
 
 .schedule-table th {
@@ -147,6 +231,21 @@ function resetSchedule() {
   color: var(--primary-color-text);
 }
 
+.schedule-cell.disabled-cell {
+  background-color: var(--surface-100);
+  color: var(--surface-400);
+  cursor: not-allowed;
+}
+
+.schedule-cell.disabled-cell:hover {
+  background-color: var(--surface-100);
+}
+
+.disabled-marker {
+    color: var(--surface-400);
+    font-size: 0.9em;
+}
+
 :deep(.p-card) {
   height: 100%;
   display: flex;
@@ -164,9 +263,49 @@ function resetSchedule() {
   padding-top: 0;
 }
 
+.category-header-row {
+  background-color: var(--surface-50);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.category-header-row:first-child {
+}
+
+.category-header {
+  text-align: left !important;
+  padding: 0.4rem 0.6rem !important;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+  font-size: 0.8rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+
 @media (prefers-color-scheme: dark) {
+  .category-header-row {
+    background-color: var(--surface-800);
+  }
+  .category-header {
+    color: var(--text-color);
+  }
   .schedule-cell:hover {
     background-color: rgba(255, 255, 255, 0.08);
   }
+  .schedule-cell.disabled-cell {
+    background-color: var(--surface-700);
+    color: var(--surface-500);
+  }
+  .schedule-cell.disabled-cell:hover {
+    background-color: var(--surface-700);
+  }
+  .disabled-marker {
+      color: var(--surface-500);
+  }
+}
+
+.actions-container {
+  display: flex;
+  gap: 0.5rem;
 }
 </style> 

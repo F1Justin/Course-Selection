@@ -1,4 +1,12 @@
 const fs = require('fs');
+const path = require('path'); // 引入 path 模块
+
+// 确保目标目录存在
+const outputDir = path.join('public', 'data');
+if (!fs.existsSync(outputDir)){
+    fs.mkdirSync(outputDir, { recursive: true });
+    console.log(`创建目录: ${outputDir}`);
+}
 
 // CSV解析函数
 function parseCSVLine(line) {
@@ -23,6 +31,24 @@ function parseCSVLine(line) {
     return result;
 }
 
+// 新增：解析课程时间字符串，提取时间段
+function parseScheduleTimeSlots(scheduleString) {
+    if (!scheduleString) return [];
+    const slots = new Set();
+    // 课程时间可能由多个部分组成，以逗号分隔
+    const parts = scheduleString.split(','); 
+
+    parts.forEach(part => {
+        // 匹配 "数字-数字节" 或 "数字-数字节" (可能前面有星期几)
+        // 例如: "星期一1-2节", "3-4节", "星期三10-12节"
+        const match = part.match(/(?:星期[一二三四五六日])?(\d{1,2}-\d{1,2})节/);
+        if (match && match[1]) {
+            slots.add(match[1]);
+        }
+    });
+    return Array.from(slots);
+}
+
 // 读取CSV文件
 console.log('开始读取CSV文件...');
 const csvData = fs.readFileSync('source.csv', 'utf8');
@@ -40,6 +66,7 @@ const validCourseNatures = [
 const validCampuses = ["四平路校区", "嘉定校区", "沪西校区", "沪北校区"];
 
 let currentDepartment = "";
+const allTimeSlots = new Set(); // 用于收集所有唯一的时间段
 
 console.log('开始处理数据...');
 for (let i = 0; i < rows.length; i++) {
@@ -55,6 +82,10 @@ for (let i = 0; i < rows.length; i++) {
             continue;
         }
 
+        const rawSchedule = row[14];
+        const parsedTimeSlots = parseScheduleTimeSlots(rawSchedule);
+        parsedTimeSlots.forEach(slot => allTimeSlots.add(slot));
+
         courseData.push({
             courseId: row[0],
             courseName: row[1],
@@ -66,7 +97,8 @@ for (let i = 0; i < rows.length; i++) {
             campus: row[9],
             department: currentDepartment,
             auditInfo: row[10],
-            schedule: row[14].replace(/\s+/g, '')
+            schedule: rawSchedule.replace(/\s+/g, ''), // 保留原始的、去空格的 schedule 字符串
+            parsedTimeSlots: parsedTimeSlots // 新增解析后的时间段
         });
     }
     
@@ -81,6 +113,7 @@ const filterData = {
     courseNatures: [...new Set(courseData.map(item => item.courseNature))].sort(),
     campuses: [...new Set(courseData.map(item => item.campus))].sort(),
     departments: [...new Set(courseData.map(item => item.department))].sort(),
+    // timeSlots: [...allTimeSlots].sort() // 将时间段也加入到 filters.json 中 (或者单独文件)
 };
 
 console.log('开始写入JSON文件...');
@@ -88,5 +121,15 @@ console.log('开始写入JSON文件...');
 fs.writeFileSync('public/data/courses.json', JSON.stringify(courseData));
 // 将筛选器数据写入单独文件
 fs.writeFileSync('public/data/filters.json', JSON.stringify(filterData));
+// 新增：将唯一时间段写入 timeSlots.json
+fs.writeFileSync('public/data/timeSlots.json', JSON.stringify([...allTimeSlots].sort((a, b) => {
+    // 自定义排序逻辑，例如按起始节数排序，然后按结束节数排序
+    const [aStart, aEnd] = a.split('-').map(Number);
+    const [bStart, bEnd] = b.split('-').map(Number);
+    if (aStart !== bStart) {
+        return aStart - bStart;
+    }
+    return aEnd - bEnd;
+})));
 
 console.log('数据处理和JSON文件生成完成'); 
