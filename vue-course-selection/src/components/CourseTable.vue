@@ -49,12 +49,12 @@
           <Column field="department" header="开课学院" style="width: 10%" />
           <Column field="auditInfo" header="听课专业" style="width: 16%">
             <template #body="slotProps">
-              <div class="overflow-tooltip">{{ slotProps.data.auditInfo }}</div>
+              <div class="wrappable-text">{{ slotProps.data.auditInfo }}</div>
             </template>
           </Column>
           <Column field="schedule" header="排课信息" style="width: 17%">
             <template #body="slotProps">
-              <div class="overflow-tooltip">{{ slotProps.data.schedule }}</div>
+              <div class="wrappable-text">{{ slotProps.data.schedule }}</div>
             </template>
           </Column>
         </DataTable>
@@ -172,6 +172,7 @@ function onPageChange(event) {
 
 :deep(.p-datatable-tbody > tr > td) {
   padding: 0.5rem;
+  vertical-align: top; /* 让单元格内容从顶部对齐，适应多行文本 */
 }
 
 .table-header {
@@ -207,21 +208,19 @@ function onPageChange(event) {
   justify-content: center;
 }
 
-.overflow-tooltip {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 200px;
+/* 新的可换行文本样式，替代之前的 overflow-tooltip */
+.wrappable-text {
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.4;
+  max-width: 100%;
 }
 
 /* 大屏幕优化 */
 @media screen and (min-width: 1200px) {
   :deep(.p-datatable-tbody > tr > td) {
     padding: 0.5rem 0.5rem;
-  }
-  
-  .overflow-tooltip {
-    max-width: 300px;
   }
 }
 </style> 
