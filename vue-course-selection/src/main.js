@@ -4,8 +4,8 @@ import PrimeVue from 'primevue/config';
 import App from './App.vue';
 import './assets/main.scss';
 
-// PrimeVue样式
-import 'primevue/resources/themes/lara-light-blue/theme.css';
+// PrimeVue样式 - 移除静态主题导入，改为动态导入
+// import 'primevue/resources/themes/lara-light-blue/theme.css'; // 注释掉静态导入
 import 'primevue/resources/primevue.min.css';
 import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.css';

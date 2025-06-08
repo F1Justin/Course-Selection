@@ -1,13 +1,6 @@
 /* 全局样式 */
 :root {
-  /* PrimeVue主题颜色变量 */
-  --primary-color: #3B82F6;
-  --surface-ground: #F8F9FA;
-  --text-color: #1E293B;
-  --surface-card: #FFFFFF;
-  --text-color-secondary: #64748B;
-  --surface-border: #E2E8F0;
-  --surface-hover: #F4F4F5;
+  /* 自定义字体 */
   --font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 
                  'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
 }
@@ -19,8 +12,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 16px;
-  color: var(--text-color);
-  background-color: var(--surface-ground);
+  transition: color 0.2s, background-color 0.2s; /* 添加平滑过渡效果 */
   /* 添加全局缩放，解决Vercel环境中显示过大的问题 */
   transform: scale(0.95);
   transform-origin: top left;
@@ -42,12 +34,10 @@ html, body {
   font-size: 28px;
   font-weight: 600;
   margin-bottom: 10px;
-  color: var(--text-color);
 }
 
 .section {
   margin-bottom: 30px;
-  background-color: var(--surface-card);
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   padding: 20px;
@@ -55,25 +45,4 @@ html, body {
 
 .text-center {
   text-align: center;
-}
-
-/* 深色模式支持 - 手动实现，当PrimeVue切换为深色主题时会覆盖 */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface-ground: #121212;
-    --text-color: #f8f9fa;
-    --surface-card: #1e1e1e;
-    --text-color-secondary: #adb5bd;
-    --surface-border: #495057;
-    --surface-hover: #333333;
-  }
-
-  html, body {
-    background-color: var(--surface-ground);
-    color: var(--text-color);
-  }
-
-  .section {
-    background-color: var(--surface-card);
-  }
 } 

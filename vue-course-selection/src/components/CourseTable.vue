@@ -172,7 +172,12 @@ function onPageChange(event) {
 
 :deep(.p-datatable-tbody > tr > td) {
   padding: 0.5rem;
-  vertical-align: top; /* 让单元格内容从顶部对齐，适应多行文本 */
+  vertical-align: top;
+}
+
+/* 斑马线颜色 */
+:deep(.p-datatable-tbody > tr.p-datatable-striped) {
+    background-color: var(--surface-ground);
 }
 
 .table-header {
@@ -180,6 +185,7 @@ function onPageChange(event) {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+  color: var(--text-color-secondary);
 }
 
 .table-title {
@@ -200,6 +206,7 @@ function onPageChange(event) {
   align-items: center;
   padding: 2rem;
   color: var(--text-color-secondary);
+  flex: 1;
 }
 
 .pagination-container {

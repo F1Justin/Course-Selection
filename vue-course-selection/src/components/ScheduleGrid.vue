@@ -222,13 +222,13 @@ function toggleShowAllTimeCategories() {
   transition: background-color 0.2s;
 }
 
-.schedule-cell:hover {
+.schedule-cell:hover:not(.disabled-cell):not(.active) {
   background-color: var(--surface-hover);
 }
 
 .schedule-cell.active {
   background-color: var(--primary-color);
-  color: var(--primary-color-text);
+  color: var(--primary-color-text, #ffffff);
 }
 
 .schedule-cell.disabled-cell {
@@ -282,26 +282,30 @@ function toggleShowAllTimeCategories() {
   border-bottom: 1px solid var(--surface-border);
 }
 
-@media (prefers-color-scheme: dark) {
-  .category-header-row {
-    background-color: var(--surface-800);
-  }
-  .category-header {
-    color: var(--text-color);
-  }
-  .schedule-cell:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-  }
-  .schedule-cell.disabled-cell {
-    background-color: var(--surface-700);
-    color: var(--surface-500);
-  }
-  .schedule-cell.disabled-cell:hover {
-    background-color: var(--surface-700);
-  }
-  .disabled-marker {
-      color: var(--surface-500);
-  }
+/* 深色模式样式 - 使用data-theme属性而不是media query */
+[data-theme="dark"] .category-header-row {
+  background-color: #2a2a2a;
+}
+
+[data-theme="dark"] .category-header {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .schedule-cell:hover:not(.disabled-cell):not(.active) {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .schedule-cell.disabled-cell {
+  background-color: #374151; /* 深灰色背景 */
+  color: #9ca3af; /* 浅灰色文字 */
+}
+
+[data-theme="dark"] .schedule-cell.disabled-cell:hover {
+  background-color: #374151; /* 悬停时保持同样的深灰色 */
+}
+
+[data-theme="dark"] .disabled-marker {
+  color: #9ca3af;
 }
 
 .actions-container {
