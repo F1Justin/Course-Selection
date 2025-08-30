@@ -1,31 +1,61 @@
-# 课程展示与筛选系统
+# 通济 - 选课系统（Vue）
 
-这是一个使用Vue.js框架开发的课程展示与筛选系统，提供多样化的筛选功能和友好的用户界面。
+使用 Vue 3 + PrimeVue 构建的课程筛选与选课模拟工具，支持按条件筛选、时间网格筛选、选课模拟与冲突高亮、已选课程列表等功能。
 
-## 项目说明
+## 子项目
 
-原始项目已重构为Vue.js版本，位于 `vue-course-selection` 目录下。新版本提供了以下改进：
+重构版本位于 `vue-course-selection` 目录（本仓库的主要可运行代码）。
 
-- 使用Vue 3 + PrimeVue构建的现代化界面
-- 组件化设计，更好的代码组织和可维护性
-- 响应式布局，适配不同设备屏幕
-- 深色模式支持
-- 更高效的性能优化
+核心功能：
+- 多条件筛选：课程性质/校区/开课学院/全文搜索
+- 时间网格筛选：按星期与节次筛选，常用/全部时段切换
+- 选课模拟：在课程表内选择/退选；自动检测并高亮时间冲突
+- 已选课程列表：集中查看、退选、快捷跳转“课程评价”
+- 长文本优化：单元格默认显示 4 行，点击弹出完整信息
+- 本地持久化：已选课程保存至浏览器 localStorage
+- 深色模式：跟随系统主题
 
-## 在线预览
+## 快速开始
 
-项目已部署到Vercel，可通过以下链接访问：
+1) 进入子项目并安装依赖
 
-- [课程展示与筛选系统 - PrimeVue版](https://course.f1justin.com)
+```bash
+cd vue-course-selection
+npm ci
+```
 
-## 如何使用
+2) 启动开发服务器
 
-请查看 `vue-course-selection` 目录下的 `README.md` 和 `GETTING_STARTED.md` 文件，了解详细的使用说明和开发指南。
+```bash
+npm run dev -- --host 0.0.0.0 --port 5173
+```
 
-## 数据来源
+3) 生产构建与预览
 
-系统使用的课程数据来自同济大学教务系统，仅用于学习和展示目的。
+```bash
+npm run build
+npm run preview
+```
+
+## 数据与预处理
+
+- 运行时数据位于子项目 `public/data/`：
+  - `courses.json`：课程列表（包含 `parsedTimeSlots`）
+  - `filters.json`：筛选项
+  - `timeSlots.json`：所有可用时间段
+- 如需从 CSV 重新生成数据（需要 `source.csv`）：
+
+```bash
+cd vue-course-selection
+npm run preprocess
+```
+
+脚本 `scripts/csv-to-json.js` 会解析排课信息，生成上述 JSON 文件。
+
+## 在线预览 / 部署
+
+- 构建产物位于 `vue-course-selection/dist/`，可直接部署到任意静态托管平台（如 Vercel、Netlify、GitHub Pages 等）。
 
 ## 许可证
 
-本项目采用 MIT 许可证，详情请参阅 LICENSE 文件。
+MIT，详见 `LICENSE`。
