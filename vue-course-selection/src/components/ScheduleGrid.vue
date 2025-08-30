@@ -43,12 +43,21 @@
                   :class="[
                     'schedule-cell',
                     { 'active': isActive(day.value, item.slot) },
-                    { 'disabled-cell': !hasCoursesInCell(day.value, item.slot) }
+                    { 'disabled-cell': !hasCoursesInCell(day.value, item.slot) },
+                    { 'has-selected': cellHasSelected(day.value, item.slot) },
+                    { 'conflict-cell': cellIsConflict(day.value, item.slot) }
                   ]"
                   @click="hasCoursesInCell(day.value, item.slot) ? selectTimeSlot(day.value, item.slot) : null"
                 >
                   <span v-if="hasCoursesInCell(day.value, item.slot)">&nbsp;</span>
                   <span v-else class="disabled-marker">-</span>
+
+                  <!-- 已选课程标记 -->
+                  <div v-if="cellHasSelected(day.value, item.slot)" class="selected-overlay">
+                    <div class="selected-count" :title="selectedTooltip(day.value, item.slot)">
+                      {{ getSelectedCoursesInCell(day.value, item.slot).length }}
+                    </div>
+                  </div>
                 </td>
               </tr>
             </template>
@@ -56,6 +65,25 @@
                 <tr><td :colspan="days.length + 1" style="text-align: center; padding: 1rem;">正在加载或无可用时间段...</td></tr>
             </tbody>
           </table>
+        </div>
+
+        <div class="legend">
+          <span class="legend-item">
+            <span class="legend-swatch swatch-available"></span>
+            可选单元格
+          </span>
+          <span class="legend-item">
+            <span class="legend-swatch swatch-selected"></span>
+            含已选课程
+          </span>
+          <span class="legend-item">
+            <span class="legend-swatch swatch-conflict"></span>
+            已选冲突
+          </span>
+          <span class="legend-item">
+            <span class="legend-swatch swatch-active"></span>
+            当前筛选
+          </span>
         </div>
       </template>
     </Card>
@@ -72,6 +100,8 @@ const courseStore = useCourseStore();
 const filters = computed(() => courseStore.filters);
 const filterOptions = computed(() => courseStore.filterOptions);
 const scheduleCellCourseCounts = computed(() => courseStore.scheduleCellCourseCounts);
+const selectedScheduleMap = computed(() => courseStore.selectedScheduleMap);
+const conflictCells = computed(() => courseStore.conflictCells);
 
 const showAllTimeCategories = ref(false);
 
@@ -175,6 +205,25 @@ function resetSchedule() {
 function toggleShowAllTimeCategories() {
   showAllTimeCategories.value = !showAllTimeCategories.value;
 }
+
+// 已选渲染与冲突高亮
+function getSelectedCoursesInCell(dayIndex, timeSlot) {
+  return selectedScheduleMap.value?.[dayIndex]?.[timeSlot] || [];
+}
+
+function cellHasSelected(dayIndex, timeSlot) {
+  return getSelectedCoursesInCell(dayIndex, timeSlot).length > 0;
+}
+
+function cellIsConflict(dayIndex, timeSlot) {
+  return !!conflictCells.value?.[dayIndex]?.[timeSlot];
+}
+
+function selectedTooltip(dayIndex, timeSlot) {
+  const courses = getSelectedCoursesInCell(dayIndex, timeSlot);
+  if (!courses.length) return '';
+  return courses.map(c => `${c.courseName}(${c.courseId})`).join(' / ');
+}
 </script>
 
 <style scoped>
@@ -246,19 +295,88 @@ function toggleShowAllTimeCategories() {
     font-size: 0.9em;
 }
 
-:deep(.p-card) {
+/* 已选与冲突可视化 */
+.schedule-cell.has-selected {
+  position: relative;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.06));
+}
+
+.schedule-cell.conflict-cell {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(239, 68, 68, 0.08));
+  outline: 1px solid rgba(239, 68, 68, 0.45);
+}
+
+.selected-overlay {
+  position: absolute;
+  inset: 0.2rem;
+  display: flex;
+  align-items: start;
+  justify-content: end;
+  pointer-events: none;
+}
+
+.selected-count {
+  background: rgba(16, 185, 129, 0.9);
+  color: white;
+  border-radius: 999px;
+  padding: 0 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.2rem;
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+.legend {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 0.75rem;
+  color: var(--text-color-secondary);
+  font-size: 0.85rem;
+}
+
+.legend-item {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--surface-border);
+}
+
+.swatch-available {
+  background: var(--surface-0);
+}
+
+.swatch-selected {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.15));
+}
+
+.swatch-conflict {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.35), rgba(239, 68, 68, 0.2));
+}
+
+.swatch-active {
+  background: var(--primary-color);
+}
+
+::deep(.p-card) {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-:deep(.p-card-body) {
+::deep(.p-card-body) {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-:deep(.p-card-content) {
+::deep(.p-card-content) {
   flex: 1;
   padding-top: 0;
 }

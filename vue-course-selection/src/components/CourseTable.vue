@@ -27,34 +27,95 @@
           size="small"
           tableStyle="min-width: 50rem"
         >
-          <Column field="courseId" header="课程序号" sortable style="width: 7%" />
+          <Column header="操作" style="width: 10%" :exportable="false">
+            <template #body="slotProps">
+              <div class="actions-cell">
+                <Button
+                  :label="isSelected(slotProps.data.courseId) ? '退选' : '选课'"
+                  :severity="isSelected(slotProps.data.courseId) ? 'danger' : (wouldConflict(slotProps.data.courseId) ? 'warning' : 'success')"
+                  size="small"
+                  class="p-button-sm"
+                  @click="onToggle(slotProps.data.courseId)"
+                />
+                <div class="conflict-hint" v-if="wouldConflict(slotProps.data.courseId)">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <span>{{ isSelected(slotProps.data.courseId) ? '与其他已选课程冲突' : '选中将产生冲突' }}</span>
+                </div>
+              </div>
+            </template>
+          </Column>
+          <Column field="courseId" header="课程序号" sortable style="width: 7%">
+            <template #body="slotProps">
+              <div class="wrappable-text clamped-text">{{ slotProps.data.courseId }}</div>
+            </template>
+          </Column>
           <Column field="courseName" header="课程名称" style="width: 12%">
             <template #body="slotProps">
               <a
                 :href="`https://1.tongji.icu/search?q=${encodeURIComponent(slotProps.data.courseName)}`"
                 target="_blank"
-                class="p-link"
+                class="p-link clamped-text"
               >
                 {{ slotProps.data.courseName }}
                 <i class="pi pi-external-link" style="font-size: 0.75rem; margin-left: 3px"></i>
               </a>
             </template>
           </Column>
-          <Column field="weeklyHours" header="周学时" style="width: 4%" align="center" />
-          <Column field="leader" header="负责人" style="width: 6%" />
-          <Column field="teachers" header="授课教师" style="width: 8%" />
-          <Column field="courseNature" header="课程性质" style="width: 9%" />
-          <Column field="language" header="授课语言" style="width: 6%" align="center" />
-          <Column field="campus" header="校区" style="width: 5%" />
-          <Column field="department" header="开课学院" style="width: 10%" />
+          <Column field="weeklyHours" header="周学时" style="width: 4%" align="center">
+            <template #body="slotProps">
+              <div class="wrappable-text clamped-text">{{ slotProps.data.weeklyHours }}</div>
+            </template>
+          </Column>
+          <Column field="leader" header="负责人" style="width: 6%">
+            <template #body="slotProps">
+              <div class="wrappable-text clamped-text">{{ slotProps.data.leader }}</div>
+            </template>
+          </Column>
+          <Column field="teachers" header="授课教师" style="width: 8%">
+            <template #body="slotProps">
+              <div class="wrappable-text clamped-text">{{ slotProps.data.teachers }}</div>
+            </template>
+          </Column>
+          <Column field="courseNature" header="课程性质" style="width: 9%">
+            <template #body="slotProps">
+              <div class="wrappable-text clamped-text">{{ slotProps.data.courseNature }}</div>
+            </template>
+          </Column>
+          <Column field="language" header="授课语言" style="width: 6%" align="center">
+            <template #body="slotProps">
+              <div class="wrappable-text clamped-text">{{ slotProps.data.language }}</div>
+            </template>
+          </Column>
+          <Column field="campus" header="校区" style="width: 5%">
+            <template #body="slotProps">
+              <div class="wrappable-text clamped-text">{{ slotProps.data.campus }}</div>
+            </template>
+          </Column>
+          <Column field="department" header="开课学院" style="width: 10%">
+            <template #body="slotProps">
+              <div class="wrappable-text clamped-text">{{ slotProps.data.department }}</div>
+            </template>
+          </Column>
           <Column field="auditInfo" header="听课专业" style="width: 16%">
             <template #body="slotProps">
-              <div class="wrappable-text">{{ slotProps.data.auditInfo }}</div>
+              <div 
+                class="wrappable-text clamped-text clickable-cell"
+                @click="openCellDetail($event, slotProps.data.auditInfo, '听课专业')"
+                :title="'点击查看完整内容'"
+              >
+                {{ slotProps.data.auditInfo }}
+              </div>
             </template>
           </Column>
           <Column field="schedule" header="排课信息" style="width: 17%">
             <template #body="slotProps">
-              <div class="wrappable-text">{{ slotProps.data.schedule }}</div>
+              <div 
+                class="wrappable-text clamped-text clickable-cell"
+                @click="openCellDetail($event, slotProps.data.schedule, '排课信息')"
+                :title="'点击查看完整内容'"
+              >
+                {{ slotProps.data.schedule }}
+              </div>
             </template>
           </Column>
         </DataTable>
@@ -72,6 +133,14 @@
         </div>
       </template>
     </Card>
+
+    <!-- 单击表格单元弹出完整信息 -->
+    <OverlayPanel ref="op" :dismissable="true" showCloseIcon>
+      <div class="overlay-content">
+        <div class="overlay-title">{{ overlayTitle }}</div>
+        <div class="overlay-text">{{ overlayText }}</div>
+      </div>
+    </OverlayPanel>
   </div>
 </template>
 
@@ -82,6 +151,7 @@ import Card from 'primevue/card';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Paginator from 'primevue/paginator';
+import OverlayPanel from 'primevue/overlaypanel';
 
 const courseStore = useCourseStore();
 
@@ -109,6 +179,29 @@ function onPageChange(event) {
     behavior: 'smooth',
     block: 'start'
   });
+}
+
+// 选课交互
+function isSelected(courseId) {
+  return courseStore.isCourseSelected(courseId);
+}
+
+function wouldConflict(courseId) {
+  return courseStore.wouldConflictWithSelected(courseId);
+}
+
+function onToggle(courseId) {
+  courseStore.toggleCourseSelection(courseId);
+}
+
+// 长文本弹出
+const op = ref();
+const overlayText = ref('');
+const overlayTitle = ref('');
+function openCellDetail(event, text, title) {
+  overlayText.value = String(text || '');
+  overlayTitle.value = String(title || '详情');
+  op.value?.show(event);
 }
 </script>
 
@@ -213,6 +306,49 @@ function onPageChange(event) {
   margin-top: 0.75rem;
   display: flex;
   justify-content: center;
+}
+
+.actions-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.conflict-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: #d97706;
+}
+
+/* 4行截断与点击展开 */
+.clamped-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+}
+
+.clickable-cell {
+  cursor: pointer;
+}
+
+.overlay-content {
+  max-width: min(70vw, 800px);
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.overlay-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.overlay-text {
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 
 /* 新的可换行文本样式，替代之前的 overflow-tooltip */

@@ -45,8 +45,11 @@
           </div>
         </div>
         
-        <!-- 课程表占据全部宽度 -->
+        <!-- 已选课程 + 课程表 -->
         <div class="grid table-grid">
+          <div class="col-12">
+            <SelectedCourses />
+          </div>
           <div class="col-12 course-table-container">
             <CourseTable />
           </div>
@@ -70,6 +73,7 @@ import CourseTable from '@/components/CourseTable.vue';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
 import Message from 'primevue/message';
 import Button from 'primevue/button';
+import SelectedCourses from '@/components/SelectedCourses.vue';
 
 const courseStore = useCourseStore();
 const loading = computed(() => courseStore.loading);

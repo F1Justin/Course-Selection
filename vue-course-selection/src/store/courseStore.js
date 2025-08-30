@@ -24,6 +24,35 @@ export const useCourseStore = defineStore('courses', () => {
   const currentPage = ref(1);
   const pageSize = ref(35);
   const scheduleCellCourseCounts = ref({}); // { [dayIndex]: { [timeSlot]: count } }
+  // 选课模拟：已选课程ID集合（使用Set包装在ref中，更新时以新Set替换以触发响应）
+  const selectedCourseIds = ref(new Set());
+  const SELECTED_STORAGE_KEY = 'selectedCourseIds';
+
+  // 已选课程的按天-时间段映射：{ [dayIndex]: { [slot]: Course[] } }
+  const selectedScheduleMap = computed(() => {
+    const byDay = {};
+    selectedCourses.value.forEach(course => {
+      const entries = getCourseDaySlotEntries(course);
+      entries.forEach(({ dayIndex, slot }) => {
+        if (!byDay[dayIndex]) byDay[dayIndex] = {};
+        if (!byDay[dayIndex][slot]) byDay[dayIndex][slot] = [];
+        byDay[dayIndex][slot].push(course);
+      });
+    });
+    return byDay;
+  });
+
+  // 冲突单元格：某天某时间段被两个及以上课程占用
+  const conflictCells = computed(() => {
+    const result = {};
+    Object.entries(selectedScheduleMap.value).forEach(([dayIndex, slotsMap]) => {
+      Object.entries(slotsMap).forEach(([slot, courses]) => {
+        if (!result[dayIndex]) result[dayIndex] = {};
+        result[dayIndex][slot] = (courses?.length || 0) > 1;
+      });
+    });
+    return result;
+  });
   
   // 选修课类型列表
   const electiveCourseTypes = [
@@ -40,6 +69,10 @@ export const useCourseStore = defineStore('courses', () => {
     const start = (currentPage.value - 1) * pageSize.value;
     const end = start + pageSize.value;
     return filteredCourses.value.slice(start, end);
+  });
+  const selectedCourses = computed(() => {
+    if (!originalCourses.value?.length) return [];
+    return originalCourses.value.filter(c => selectedCourseIds.value.has(c.courseId));
   });
   
   // Helper to get day index from schedule string part
@@ -90,6 +123,118 @@ export const useCourseStore = defineStore('courses', () => {
     });
     scheduleCellCourseCounts.value = newCounts;
   }
+
+  // 将时间段字符串如 "7-8" 展开为离散节次集合，便于精确重叠判断
+  function expandSlotToUnits(slot) {
+    if (!slot) return new Set();
+    const [startStr, endStr] = String(slot).split('-');
+    const start = parseInt(startStr);
+    const end = parseInt(endStr ?? startStr);
+    const units = new Set();
+    if (!isNaN(start) && !isNaN(end)) {
+      for (let i = start; i <= end; i++) units.add(i);
+    }
+    return units;
+  }
+
+  // 提取课程的 (dayIndex, slot) 列表
+  function getCourseDaySlotEntries(course) {
+    const entries = [];
+    if (!course?.schedule || !course?.parsedTimeSlots?.length) return entries;
+    const scheduleParts = course.schedule.split(',');
+    course.parsedTimeSlots.forEach(slot => {
+      scheduleParts.forEach(part => {
+        if (part.includes(slot)) {
+          const dayIndex = getDayIndexFromScheduleItem(part);
+          if (dayIndex) entries.push({ dayIndex, slot });
+        }
+      });
+    });
+    return entries;
+  }
+
+  // 判断某课程与当前已选是否发生时间冲突
+  function wouldConflictWithSelected(courseOrId) {
+    const course = typeof courseOrId === 'string' || typeof courseOrId === 'number'
+      ? originalCourses.value.find(c => c.courseId === courseOrId)
+      : courseOrId;
+    if (!course) return false;
+
+    // 逐天检查是否与已选课程在任一节次发生交集
+    const entries = getCourseDaySlotEntries(course);
+    for (const { dayIndex, slot } of entries) {
+      const candidateUnits = expandSlotToUnits(slot);
+      const selectedAtSameDay = selectedScheduleMap.value[dayIndex] || {};
+      for (const [selectedSlot, courses] of Object.entries(selectedAtSameDay)) {
+        // 忽略同一门已选课程
+        const hasSameCourse = courses.some(c => c.courseId === course.courseId);
+        const selectedUnits = expandSlotToUnits(selectedSlot);
+        // 判断单位节是否有交集
+        const intersects = [...candidateUnits].some(u => selectedUnits.has(u));
+        if (!hasSameCourse && intersects) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // 选课增删
+  function selectCourse(courseId) {
+    if (!courseId) return;
+    if (selectedCourseIds.value.has(courseId)) return;
+    // 以新Set替换，保证响应
+    selectedCourseIds.value = new Set([...selectedCourseIds.value, courseId]);
+    persistSelected();
+  }
+
+  function deselectCourse(courseId) {
+    if (!courseId) return;
+    if (!selectedCourseIds.value.has(courseId)) return;
+    const next = new Set(selectedCourseIds.value);
+    next.delete(courseId);
+    selectedCourseIds.value = next;
+    persistSelected();
+  }
+
+  function toggleCourseSelection(courseId) {
+    if (!courseId) return;
+    if (selectedCourseIds.value.has(courseId)) {
+      deselectCourse(courseId);
+    } else {
+      selectCourse(courseId);
+    }
+  }
+
+  function isCourseSelected(courseId) {
+    return selectedCourseIds.value.has(courseId);
+  }
+
+  // 本地持久化
+  function persistSelected() {
+    try {
+      const ids = Array.from(selectedCourseIds.value);
+      localStorage.setItem(SELECTED_STORAGE_KEY, JSON.stringify(ids));
+    } catch (e) {
+      // 忽略存储异常
+    }
+  }
+
+  function loadSelectedFromStorage() {
+    try {
+      const raw = localStorage.getItem(SELECTED_STORAGE_KEY);
+      if (!raw) return;
+      const ids = JSON.parse(raw);
+      if (Array.isArray(ids)) {
+        selectedCourseIds.value = new Set(ids);
+      }
+    } catch (e) {
+      // 忽略解析异常
+    }
+  }
+
+  // 初始化：尝试从本地恢复选课
+  loadSelectedFromStorage();
 
   // 方法
   async function loadCourses() {
@@ -200,6 +345,10 @@ export const useCourseStore = defineStore('courses', () => {
     pageSize,
     electiveCourseTypes,
     scheduleCellCourseCounts, // 暴露给组件
+    selectedCourseIds,
+    selectedCourses,
+    selectedScheduleMap,
+    conflictCells,
     
     // 计算属性
     totalItems,
@@ -210,6 +359,12 @@ export const useCourseStore = defineStore('courses', () => {
     loadCourses,
     applyFilters,
     resetScheduleFilter,
-    goToPage
+    goToPage,
+    // 选课API
+    selectCourse,
+    deselectCourse,
+    toggleCourseSelection,
+    isCourseSelected,
+    wouldConflictWithSelected
   };
 }); 
