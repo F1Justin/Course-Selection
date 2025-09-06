@@ -15,7 +15,8 @@
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
     "primevue": "^3.53.1",
-    "vue": "^3.3.4"
+    "vue": "^3.3.4",
+    "vue-router": "^4.5.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.3.4",
