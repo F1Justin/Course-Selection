@@ -42,15 +42,35 @@ export const useCourseStore = defineStore('courses', () => {
     return byDay;
   });
 
-  // 冲突单元格：某天某时间段被两个及以上课程占用
+  // 冲突单元格：考虑周次与节次真实冲突（任意两门在相同周次且节次重叠）
   const conflictCells = computed(() => {
     const result = {};
-    Object.entries(selectedScheduleMap.value).forEach(([dayIndex, slotsMap]) => {
-      Object.entries(slotsMap).forEach(([slot, courses]) => {
-        if (!result[dayIndex]) result[dayIndex] = {};
-        result[dayIndex][slot] = (courses?.length || 0) > 1;
-      });
-    });
+    const courses = selectedCourses.value;
+    for (let i = 0; i < courses.length; i++) {
+      for (let j = i + 1; j < courses.length; j++) {
+        const A = courses[i];
+        const B = courses[j];
+        const aEntries = extractEntriesFromSchedule(A.schedule).map(e => ({ dayIndex: e.dayIndex, slot: e.slot, units: expandSlotToUnits(e.slot), weeks: e.weeks }));
+        const bEntries = extractEntriesFromSchedule(B.schedule).map(e => ({ dayIndex: e.dayIndex, slot: e.slot, units: expandSlotToUnits(e.slot), weeks: e.weeks }));
+        aEntries.forEach(ae => {
+          bEntries.forEach(be => {
+            if (ae.dayIndex !== be.dayIndex) return;
+            const unitOverlap = [...ae.units].some(u => be.units.has(u));
+            if (!unitOverlap) return;
+            let weeksOverlap = true;
+            if (ae.weeks && be.weeks) {
+              weeksOverlap = [...ae.weeks].some(w => be.weeks.has(w));
+            }
+            if (weeksOverlap) {
+              const dayKey = String(ae.dayIndex);
+              if (!result[dayKey]) result[dayKey] = {};
+              result[dayKey][ae.slot] = true;
+              result[dayKey][be.slot] = true;
+            }
+          });
+        });
+      }
+    }
     return result;
   });
   
@@ -105,21 +125,13 @@ export const useCourseStore = defineStore('courses', () => {
     });
 
     coursesToConsider.forEach(course => {
-      if (course.parsedTimeSlots && course.schedule) {
-        const scheduleParts = course.schedule.split(','); // 原始schedule包含星期信息
-        course.parsedTimeSlots.forEach(slot => {
-          scheduleParts.forEach(part => {
-            if (part.includes(slot)) { // 确保这一部分与当前时间段相关
-                const dayIndex = getDayIndexFromScheduleItem(part);
-                if (dayIndex) {
-                    if (!newCounts[dayIndex]) newCounts[dayIndex] = {};
-                    if (!newCounts[dayIndex][slot]) newCounts[dayIndex][slot] = 0;
-                    newCounts[dayIndex][slot]++;
-                }
-            }
-          });
-        });
-      }
+      if (!course?.schedule) return;
+      const entries = extractEntriesFromSchedule(course.schedule);
+      entries.forEach(({ dayIndex, slot }) => {
+        if (!newCounts[dayIndex]) newCounts[dayIndex] = {};
+        if (!newCounts[dayIndex][slot]) newCounts[dayIndex][slot] = 0;
+        newCounts[dayIndex][slot]++;
+      });
     });
     scheduleCellCourseCounts.value = newCounts;
   }
@@ -137,42 +149,82 @@ export const useCourseStore = defineStore('courses', () => {
     return units;
   }
 
-  // 提取课程的 (dayIndex, slot) 列表
-  function getCourseDaySlotEntries(course) {
-    const entries = [];
-    if (!course?.schedule || !course?.parsedTimeSlots?.length) return entries;
-    const scheduleParts = course.schedule.split(',');
-    course.parsedTimeSlots.forEach(slot => {
-      scheduleParts.forEach(part => {
-        if (part.includes(slot)) {
-          const dayIndex = getDayIndexFromScheduleItem(part);
-          if (dayIndex) entries.push({ dayIndex, slot });
-        }
-      });
-    });
-    return entries;
+  // 解析 schedule 字符串，提取 (dayIndex, slot, weeks)
+  function extractEntriesFromSchedule(scheduleString) {
+    const results = [];
+    if (!scheduleString) return results;
+    const dayMap = { "星期一": 1, "星期二": 2, "星期三": 3, "星期四": 4, "星期五": 5, "星期六": 6, "星期日": 7 };
+    const partRegex = /(星期[一二三四五六日])(\d{1,2}-\d{1,2})节(?:\[([^\]]+)\])?/g;
+    let m;
+    while ((m = partRegex.exec(scheduleString)) !== null) {
+      const dayStr = m[1];
+      const slot = m[2];
+      const weeksRaw = m[3] || '';
+      const dayIndex = dayMap[dayStr] || null;
+      if (!dayIndex) continue;
+      results.push({ dayIndex, slot, weeks: parseWeeksString(weeksRaw) });
+    }
+    return results;
   }
 
-  // 判断某课程与当前已选是否发生时间冲突
+  // 解析周次字符串为集合，支持 1-16 / 1-15单 / 2-16双 / 1-8,10-12 等
+  function parseWeeksString(raw) {
+    if (!raw) return null; // 未注明则视为所有周
+    let text = String(raw).trim();
+    let parity = null; // 'odd' | 'even' | null
+    if (text.includes('单')) { parity = 'odd'; text = text.replace('单', ''); }
+    if (text.includes('双')) { parity = 'even'; text = text.replace('双', ''); }
+    const set = new Set();
+    text.split(',').map(s => s.trim()).filter(Boolean).forEach(part => {
+      const m = part.match(/^(\d+)(?:-(\d+))?$/);
+      if (!m) return;
+      const start = parseInt(m[1]);
+      const end = m[2] ? parseInt(m[2]) : start;
+      for (let w = start; w <= end; w++) {
+        if (parity === 'odd' && w % 2 === 0) continue;
+        if (parity === 'even' && w % 2 !== 0) continue;
+        set.add(w);
+      }
+    });
+    return set.size > 0 ? set : null;
+  }
+
+  // 提取课程的 (dayIndex, slot) 列表（忽略周次，仅用于网格标记与计数）
+  function getCourseDaySlotEntries(course) {
+    if (!course?.schedule) return [];
+    return extractEntriesFromSchedule(course.schedule).map(e => ({ dayIndex: e.dayIndex, slot: e.slot }));
+  }
+
+  // 判断某课程与当前已选是否发生时间冲突（考虑周次与节次）
   function wouldConflictWithSelected(courseOrId) {
     const course = typeof courseOrId === 'string' || typeof courseOrId === 'number'
       ? originalCourses.value.find(c => c.courseId === courseOrId)
       : courseOrId;
     if (!course) return false;
 
-    // 逐天检查是否与已选课程在任一节次发生交集
-    const entries = getCourseDaySlotEntries(course);
-    for (const { dayIndex, slot } of entries) {
-      const candidateUnits = expandSlotToUnits(slot);
-      const selectedAtSameDay = selectedScheduleMap.value[dayIndex] || {};
-      for (const [selectedSlot, courses] of Object.entries(selectedAtSameDay)) {
-        // 忽略同一门已选课程
-        const hasSameCourse = courses.some(c => c.courseId === course.courseId);
-        const selectedUnits = expandSlotToUnits(selectedSlot);
-        // 判断单位节是否有交集
-        const intersects = [...candidateUnits].some(u => selectedUnits.has(u));
-        if (!hasSameCourse && intersects) {
-          return true;
+    const candidateEntries = extractEntriesFromSchedule(course.schedule).map(e => ({
+      dayIndex: e.dayIndex,
+      slot: e.slot,
+      units: expandSlotToUnits(e.slot),
+      weeks: e.weeks
+    }));
+    const selectedList = selectedCourses.value;
+    for (const ce of candidateEntries) {
+      for (const sc of selectedList) {
+        if (sc.courseId === course.courseId) continue;
+        const scEntries = extractEntriesFromSchedule(sc.schedule).map(e => ({
+          dayIndex: e.dayIndex,
+          slot: e.slot,
+          units: expandSlotToUnits(e.slot),
+          weeks: e.weeks
+        }));
+        for (const se of scEntries) {
+          if (se.dayIndex !== ce.dayIndex) continue;
+          const unitOverlap = [...ce.units].some(u => se.units.has(u));
+          if (!unitOverlap) continue;
+          let weeksOverlap = true;
+          if (ce.weeks && se.weeks) weeksOverlap = [...ce.weeks].some(w => se.weeks.has(w));
+          if (weeksOverlap) return true;
         }
       }
     }
@@ -309,10 +361,9 @@ export const useCourseStore = defineStore('courses', () => {
         const selectedDayString = dayMapping[filters.value.scheduleDay]; // 例如 "星期四"
         const selectedTimeSlot = filters.value.scheduleTime; // 例如 "10-12"
 
-        // 检查课程是否在选定的星期几上课，并且其 parsedTimeSlots 包含选定的时间段
-        const scheduleMatch = course.schedule.includes(selectedDayString) && 
-                              course.parsedTimeSlots && 
-                              course.parsedTimeSlots.includes(selectedTimeSlot);
+        // 使用精确解析匹配：星期几+具体节次，并考虑原始 parsedTimeSlots 的兼容
+        const parsedEntries = extractEntriesFromSchedule(course.schedule);
+        const scheduleMatch = parsedEntries.some(e => e.dayIndex === filters.value.scheduleDay && e.slot === selectedTimeSlot);
         
         return basicMatch && scheduleMatch;
       });
