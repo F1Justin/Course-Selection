@@ -8,9 +8,12 @@
       <header>
         <div class="logo">
           <div class="title-container">
-            <h1>通济 - 选课系统</h1>
+            <h1>通济 - 模拟选课系统</h1>
             <p>为苦于1系统全校课表的人准备的课程筛选工具</p>
           </div>
+        </div>
+        <div class="header-actions">
+          <Button label="查看已选的课程" icon="pi pi-eye" class="p-button-raised header-cta" @click="goPreview" />
         </div>
       </header>
       
@@ -45,11 +48,8 @@
           </div>
         </div>
         
-        <!-- 已选课程 + 课程表 -->
+        <!-- 课程表 -->
         <div class="grid table-grid">
-          <div class="col-12">
-            <SelectedCourses />
-          </div>
           <div class="col-12 course-table-container">
             <CourseTable />
           </div>
@@ -73,9 +73,10 @@ import CourseTable from '@/components/CourseTable.vue';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
 import Message from 'primevue/message';
 import Button from 'primevue/button';
-import SelectedCourses from '@/components/SelectedCourses.vue';
+import { useRouter } from 'vue-router';
 
 const courseStore = useCourseStore();
+const router = useRouter();
 const loading = computed(() => courseStore.loading);
 const error = computed(() => courseStore.error);
 
@@ -86,6 +87,10 @@ const reloadData = () => {
 onMounted(() => {
   courseStore.loadCourses();
 });
+
+function goPreview() {
+  router.push('/preview');
+}
 </script>
 
 <style scoped>
@@ -185,4 +190,9 @@ footer a {
     height: 100%;
   }
 }
+
+/* 顶部按钮右侧对齐并与标题同高 */
+header { display: flex; justify-content: space-between; align-items: center; }
+.header-actions { display: flex; align-items: center; }
+.header-cta { transform: scale(0.8); transform-origin: right center; }
 </style> 

@@ -1,7 +1,10 @@
 import { createApp } from 'vue';
+import { createRouter, createWebHistory } from 'vue-router';
 import { createPinia } from 'pinia';
 import PrimeVue from 'primevue/config';
 import App from './App.vue';
+import CourseSelection from './views/CourseSelection.vue';
+import Preview from './views/Preview.vue';
 import './assets/main.scss';
 
 // PrimeVue样式 - 移除静态主题导入，改为动态导入
@@ -24,11 +27,20 @@ import ProgressSpinner from 'primevue/progressspinner';
 const app = createApp(App);
 const pinia = createPinia();
 
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    { path: '/', component: CourseSelection },
+    { path: '/preview', component: Preview }
+  ]
+});
+
 app.use(PrimeVue, {
   ripple: true,
   inputStyle: 'filled'
 });
 app.use(pinia);
+app.use(router);
 
 // 注册全局组件
 app.component('Button', Button);
@@ -41,4 +53,4 @@ app.component('Message', Message);
 app.component('Paginator', Paginator);
 app.component('ProgressSpinner', ProgressSpinner);
 
-app.mount('#app'); 
+app.mount('#app');

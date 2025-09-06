@@ -1,12 +1,11 @@
 <template>
   <div class="app-container">
-    <CourseSelection />
+    <router-view />
   </div>
 </template>
 
 <script setup>
 import { onMounted, onUnmounted } from 'vue';
-import CourseSelection from './views/CourseSelection.vue';
 
 let mediaQueryList;
 let themeLink = null;

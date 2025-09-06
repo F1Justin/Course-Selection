@@ -94,6 +94,23 @@ export const useCourseStore = defineStore('courses', () => {
     if (!originalCourses.value?.length) return [];
     return originalCourses.value.filter(c => selectedCourseIds.value.has(c.courseId));
   });
+
+  // 预览：按天×单节映射 { [dayIndex]: { [unitNumber]: Course[] } }
+  const selectedUnitMap = computed(() => {
+    const map = {};
+    selectedCourses.value.forEach(course => {
+      const entries = extractEntriesFromSchedule(course.schedule);
+      entries.forEach(e => {
+        const units = expandSlotToUnits(e.slot);
+        units.forEach(u => {
+          if (!map[e.dayIndex]) map[e.dayIndex] = {};
+          if (!map[e.dayIndex][u]) map[e.dayIndex][u] = [];
+          map[e.dayIndex][u].push(course);
+        });
+      });
+    });
+    return map;
+  });
   
   // Helper to get day index from schedule string part
   function getDayIndexFromScheduleItem(scheduleItemString) {
@@ -399,6 +416,7 @@ export const useCourseStore = defineStore('courses', () => {
     selectedCourseIds,
     selectedCourses,
     selectedScheduleMap,
+    selectedUnitMap,
     conflictCells,
     
     // 计算属性

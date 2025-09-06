@@ -19,7 +19,7 @@
               optionValue="value" 
               placeholder="选择课程性质"
               class="w-full"
-              :showClear="true"
+              :showClear="!!filters.courseNature"
               :panelStyle="{ 'max-height': '400px', 'overflow-y': 'auto' }"
               :filter="true"
               filterPlaceholder="搜索课程性质..."
@@ -37,7 +37,7 @@
               optionValue="value" 
               placeholder="选择校区"
               class="w-full"
-              :showClear="true"
+              :showClear="!!filters.campus"
               :panelStyle="{ 'max-height': '400px', 'overflow-y': 'auto' }"
               :filter="true"
               filterPlaceholder="搜索校区..."
@@ -55,7 +55,7 @@
               optionValue="value" 
               placeholder="选择开课学院"
               class="w-full"
-              :showClear="true"
+              :showClear="!!filters.department"
               :panelStyle="{ 'max-height': '400px', 'overflow-y': 'auto' }"
               :filter="true"
               filterPlaceholder="搜索开课学院..."
@@ -65,8 +65,8 @@
           
           <div class="filter-item">
             <label class="filter-label" for="search">搜索</label>
-            <span class="p-input-icon-left w-full search-input">
-              <i class="pi pi-search" />
+            <IconField class="w-full search-input">
+              <InputIcon class="pi pi-search" />
               <InputText 
                 id="search"
                 v-model="filters.search" 
@@ -74,7 +74,7 @@
                 class="w-full"
                 @input="debounceSearch" 
               />
-            </span>
+            </IconField>
           </div>
           
           <div class="filter-actions">
@@ -98,6 +98,8 @@ import Card from 'primevue/card';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
 
 const courseStore = useCourseStore();
 const loading = computed(() => courseStore.loading);
