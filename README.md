@@ -58,4 +58,4 @@ npm run preprocess
 
 ## 许可证
 
-MIT，详见 `LICENSE`。
+Creative Commons Zero License
