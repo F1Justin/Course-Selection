@@ -49,11 +49,39 @@ function parseScheduleTimeSlots(scheduleString) {
     return Array.from(slots);
 }
 
-// 读取CSV文件
+// 读取CSV（支持多行单元格：按引号配对拼接行）
+function readCSVRecords(filePath) {
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const lines = raw.split(/\r?\n/);
+    const records = [];
+    let buffer = '';
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (buffer.length === 0) buffer = line; else buffer += "\n" + line;
+        const quoteCount = (buffer.match(/"/g) || []).length;
+        if (quoteCount % 2 === 0) {
+            // 引号配对完成，作为一条记录
+            records.push(parseCSVLine(buffer));
+            buffer = '';
+        }
+    }
+    if (buffer.length > 0) {
+        records.push(parseCSVLine(buffer));
+    }
+    return records;
+}
+
+// 首选新版CSV文件名，找不到则回退到 source.csv
 console.log('开始读取CSV文件...');
-const csvData = fs.readFileSync('source.csv', 'utf8');
-const rows = csvData.split("\n");
-console.log(`CSV文件读取完成，共${rows.length}行`);
+const candidateFiles = ['2025秋课表.csv', 'source.csv'];
+let inputFile = candidateFiles.find(f => fs.existsSync(f));
+if (!inputFile) {
+    console.error('未找到可用的CSV文件：2025秋课表.csv 或 source.csv');
+    process.exit(1);
+}
+console.log(`使用文件: ${inputFile}`);
+const rows = readCSVRecords(inputFile);
+console.log(`CSV文件读取完成，共${rows.length}条记录（含标题与分隔行）`);
 
 // 处理数据
 const courseData = [];
@@ -69,39 +97,89 @@ let currentDepartment = "";
 const allTimeSlots = new Set(); // 用于收集所有唯一的时间段
 
 console.log('开始处理数据...');
+// 基于表头映射列索引
+function buildHeaderMap(headerRow) {
+    const map = {};
+    headerRow.forEach((name, idx) => {
+        map[name] = idx;
+    });
+    return map;
+}
+
+// 寻找表头行（包含关键列名）
+let header = null;
+let headerIndex = -1;
 for (let i = 0; i < rows.length; i++) {
-    const row = parseCSVLine(rows[i]);
-    
-    if (row[0] && row.slice(1).every(cell => cell === "")) {
-        currentDepartment = row[0];
-    } else if (row[0] && row[1]) {
-        const courseNature = row[7];
-        const campus = row[9];
-
-        if (!validCourseNatures.includes(courseNature) || !validCampuses.includes(campus)) {
-            continue;
-        }
-
-        const rawSchedule = row[14];
-        const parsedTimeSlots = parseScheduleTimeSlots(rawSchedule);
-        parsedTimeSlots.forEach(slot => allTimeSlots.add(slot));
-
-        courseData.push({
-            courseId: row[0],
-            courseName: row[1],
-            weeklyHours: row[2],
-            leader: row[3],
-            teachers: row[4],
-            courseNature: row[7],
-            language: row[8],
-            campus: row[9],
-            department: currentDepartment,
-            auditInfo: row[10],
-            schedule: rawSchedule.replace(/\s+/g, ''), // 保留原始的、去空格的 schedule 字符串
-            parsedTimeSlots: parsedTimeSlots // 新增解析后的时间段
-        });
+    const row = rows[i];
+    if (row.includes('课程序号') && row.includes('课程名称')) {
+        header = row;
+        headerIndex = i;
+        break;
     }
-    
+}
+if (!header) {
+    console.error('未找到表头行，无法解析。');
+    process.exit(1);
+}
+const headerMap = buildHeaderMap(header);
+
+// 常用列名（新旧兼容）
+const COL = {
+    newCourseId: headerMap['新课程序号'],
+    courseId: headerMap['课程序号'] ?? headerMap['课程号'] ?? 1,
+    courseName: headerMap['课程名称'],
+    weeklyHours: headerMap['周学时'],
+    leader: headerMap['负责人'],
+    teachers: headerMap['授课教师'],
+    courseNature: headerMap['课程性质'],
+    language: headerMap['授课语言'],
+    campus: headerMap['校区'],
+    auditInfo: headerMap['听课专业'],
+    startWeek: headerMap['起始周'],
+    endWeek: headerMap['结束周'],
+    schedule: headerMap['排课信息']
+};
+
+for (let i = headerIndex + 1; i < rows.length; i++) {
+    const row = rows[i];
+    // 学院分隔行：第一列有值，其余多为空
+    if (row[0] && row.slice(1).every(cell => cell === '')) {
+        currentDepartment = row[0];
+        continue;
+    }
+    // 跳过空行
+    if (row.every(cell => cell === '')) continue;
+
+    // 数据行需要至少课程号和名称
+    if (!(row[COL.courseId] && row[COL.courseName])) continue;
+
+    const courseNature = row[COL.courseNature] || '';
+    const campus = row[COL.campus] || '';
+    if (!validCourseNatures.includes(courseNature) || !validCampuses.includes(campus)) {
+        continue;
+    }
+
+    const rawSchedule = row[COL.schedule] || '';
+    const normalizedSchedule = rawSchedule.replace(/\s+/g, '');
+    const parsedTimeSlots = parseScheduleTimeSlots(normalizedSchedule);
+    parsedTimeSlots.forEach(slot => allTimeSlots.add(slot));
+
+    courseData.push({
+        newCourseId: COL.newCourseId !== undefined ? (row[COL.newCourseId] || '') : '',
+        courseId: row[COL.courseId] || '',
+        courseName: row[COL.courseName] || '',
+        weeklyHours: row[COL.weeklyHours] || '',
+        leader: row[COL.leader] || '',
+        teachers: row[COL.teachers] || '',
+        courseNature: courseNature,
+        language: row[COL.language] || '',
+        campus: campus,
+        department: currentDepartment,
+        auditInfo: row[COL.auditInfo] || '',
+        schedule: normalizedSchedule,
+        parsedTimeSlots: parsedTimeSlots
+    });
+
     if (i % 1000 === 0) {
         console.log(`已处理 ${i}/${rows.length} 行...`);
     }

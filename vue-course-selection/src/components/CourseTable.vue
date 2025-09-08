@@ -44,9 +44,12 @@
               </div>
             </template>
           </Column>
-          <Column field="courseId" header="课程序号" sortable style="width: 7%">
+          <Column field="courseId" header="课程序号" sortable style="width: 10%">
             <template #body="slotProps">
-              <div class="wrappable-text clamped-text">{{ slotProps.data.courseId }}</div>
+              <div class="id-badges">
+                <span v-if="slotProps.data.newCourseId" class="badge badge-new-id" title="新课程序号">{{ slotProps.data.newCourseId }}</span>
+                <span class="badge badge-old-id" title="旧课程序号">{{ slotProps.data.courseId }}</span>
+              </div>
             </template>
           </Column>
           <Column field="courseName" header="课程名称" style="width: 12%">
@@ -64,11 +67,6 @@
           <Column field="weeklyHours" header="周学时" style="width: 4%" align="center">
             <template #body="slotProps">
               <div class="wrappable-text clamped-text">{{ slotProps.data.weeklyHours }}</div>
-            </template>
-          </Column>
-          <Column field="leader" header="负责人" style="width: 6%">
-            <template #body="slotProps">
-              <div class="wrappable-text clamped-text">{{ slotProps.data.leader }}</div>
             </template>
           </Column>
           <Column field="teachers" header="授课教师" style="width: 8%">
@@ -321,6 +319,12 @@ function openCellDetail(event, text, title) {
   font-size: 0.8rem;
   color: #d97706;
 }
+
+/* 序号双色徽标 */
+.id-badges { display: flex; gap: 0.25rem; align-items: center; flex-wrap: wrap; }
+.badge { display: inline-flex; align-items: center; padding: 0 0.35rem; border-radius: 6px; font-size: 0.8rem; line-height: 1.4; }
+.badge-new-id { background: #dbeafe; color: #1e3a8a; border: 1px solid #bfdbfe; }
+.badge-old-id { background: #ecfccb; color: #3f6212; border: 1px solid #d9f99d; }
 
 /* 4行截断与点击展开 */
 .clamped-text {
