@@ -35,17 +35,13 @@ function parseCSVLine(line) {
 function parseScheduleTimeSlots(scheduleString) {
     if (!scheduleString) return [];
     const slots = new Set();
-    // 课程时间可能由多个部分组成，以逗号分隔
-    const parts = scheduleString.split(','); 
-
-    parts.forEach(part => {
-        // 匹配 "数字-数字节" 或 "数字-数字节" (可能前面有星期几)
-        // 例如: "星期一1-2节", "3-4节", "星期三10-12节"
-        const match = part.match(/(?:星期[一二三四五六日])?(\d{1,2}-\d{1,2})节/);
-        if (match && match[1]) {
-            slots.add(match[1]);
-        }
-    });
+    // 课程时间可能由多个部分组成，来源里常见“逗号”或“换行”分隔；
+    // 这里直接全局扫描所有出现的 “x-y节” 以避免漏提取（例如多段排课信息拼接后只匹配到第一个）。
+    const re = /(?:星期[一二三四五六日])?(\d{1,2}-\d{1,2})节/g;
+    let m;
+    while ((m = re.exec(scheduleString)) !== null) {
+        if (m[1]) slots.add(m[1]);
+    }
     return Array.from(slots);
 }
 
@@ -160,7 +156,13 @@ for (let i = headerIndex + 1; i < rows.length; i++) {
     }
 
     const rawSchedule = row[COL.schedule] || '';
-    const normalizedSchedule = rawSchedule.replace(/\s+/g, '');
+    // CSV 中“排课信息”字段经常包含换行（在引号内），属于合法 CSV 表达；
+    // 为了便于后续解析与显示，将换行统一成逗号分隔，再去掉空白字符。
+    const normalizedSchedule = rawSchedule
+        .replace(/\r?\n+/g, ',')
+        .replace(/\s+/g, '')
+        .replace(/,+/g, ',')
+        .replace(/^,|,$/g, '');
     const parsedTimeSlots = parseScheduleTimeSlots(normalizedSchedule);
     parsedTimeSlots.forEach(slot => allTimeSlots.add(slot));
 
