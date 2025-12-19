@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "installCommand": "cd vue-course-selection && npm ci",
+  "buildCommand": "cd vue-course-selection && npm run build",
+  "outputDirectory": "vue-course-selection/dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+
+
