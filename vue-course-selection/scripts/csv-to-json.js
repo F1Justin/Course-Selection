@@ -71,12 +71,12 @@ function readCSVRecords(filePath) {
     return records;
 }
 
-// 首选新版CSV文件名，找不到则回退到 source.csv
+// 首选当前学期CSV文件名，找不到则回退到旧文件
 console.log('开始读取CSV文件...');
-const candidateFiles = ['2025秋课表.csv', 'source.csv'];
+const candidateFiles = ['26春课表.csv', '2025秋课表.csv', 'source.csv'];
 let inputFile = candidateFiles.find(f => fs.existsSync(f));
 if (!inputFile) {
-    console.error('未找到可用的CSV文件：2025秋课表.csv 或 source.csv');
+    console.error('未找到可用的CSV文件：26春课表.csv / 2025秋课表.csv / source.csv');
     process.exit(1);
 }
 console.log(`使用文件: ${inputFile}`);

@@ -45,7 +45,7 @@ npm run preview
   - `courses.json`：课程列表（包含 `parsedTimeSlots`）
   - `filters.json`：筛选项
   - `timeSlots.json`：所有可用时间段
-- 如需从 CSV 重新生成数据（子项目目录内需要 `2025秋课表.csv` 或 `source.csv`）：
+- 如需从 CSV 重新生成数据（子项目目录内优先读取 `26春课表.csv`，否则回退到 `2025秋课表.csv` 或 `source.csv`）：
 
 ```bash
 cd vue-course-selection
