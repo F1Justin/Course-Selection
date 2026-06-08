@@ -29,7 +29,7 @@ npm install
 npm run preprocess
 ```
 
-这将执行`scripts/csv-to-json.js`脚本，将`source.csv`文件转换为`public/data/courses.json`和`public/data/filters.json`文件。
+这将执行`scripts/csv-to-json.js`脚本，按优先级读取`2026秋课表.csv`、`26春课表.csv`、`2025秋课表.csv`或`source.csv`，并转换为`public/data/courses.json`、`public/data/filters.json`和`public/data/timeSlots.json`。
 
 ## 本地开发
 
@@ -90,7 +90,8 @@ vue-course-selection/
 ├── index.html            # HTML入口
 ├── package.json          # 项目配置
 ├── README.md             # 项目说明
-├── source.csv            # 源数据文件
+├── 2026秋课表.csv        # 当前优先源数据文件
+├── source.csv            # 旧源数据文件
 ├── vercel.json           # Vercel配置
 └── vite.config.js        # Vite配置
 ```

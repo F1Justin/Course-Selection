@@ -184,25 +184,23 @@ export const useCourseStore = defineStore('courses', () => {
     return results;
   }
 
-  // 解析周次字符串为集合，支持 1-16 / 1-15单 / 2-16双 / 1-8,10-12 等
+  // 解析周次字符串为集合，支持 1-16 / 1-15单 / 2-16双 / 1 4-12 / 1-8,10-12 等
   function parseWeeksString(raw) {
     if (!raw) return null; // 未注明则视为所有周
-    let text = String(raw).trim();
-    let parity = null; // 'odd' | 'even' | null
-    if (text.includes('单')) { parity = 'odd'; text = text.replace('单', ''); }
-    if (text.includes('双')) { parity = 'even'; text = text.replace('双', ''); }
+    const text = String(raw).trim();
     const set = new Set();
-    text.split(',').map(s => s.trim()).filter(Boolean).forEach(part => {
-      const m = part.match(/^(\d+)(?:-(\d+))?$/);
-      if (!m) return;
+    const tokenRegex = /(\d+)(?:-(\d+))?([单双])?/g;
+    let m;
+    while ((m = tokenRegex.exec(text)) !== null) {
       const start = parseInt(m[1]);
       const end = m[2] ? parseInt(m[2]) : start;
+      const parity = m[3] === '单' ? 'odd' : (m[3] === '双' ? 'even' : null);
       for (let w = start; w <= end; w++) {
         if (parity === 'odd' && w % 2 === 0) continue;
         if (parity === 'even' && w % 2 !== 0) continue;
         set.add(w);
       }
-    });
+    }
     return set.size > 0 ? set : null;
   }
 

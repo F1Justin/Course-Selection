@@ -69,9 +69,10 @@ npm run preprocess
 
 `scripts/csv-to-json.js` 会在子项目目录内按如下优先级寻找 CSV：
 
-1. `26春课表.csv`
-2. `2025秋课表.csv`
-3. `source.csv`
+1. `2026秋课表.csv`
+2. `26春课表.csv`
+3. `2025秋课表.csv`
+4. `source.csv`
 
 ## 部署（Vercel）
 

@@ -45,6 +45,37 @@ function parseScheduleTimeSlots(scheduleString) {
     return Array.from(slots);
 }
 
+function normalizeScheduleString(scheduleString) {
+    if (!scheduleString) return '';
+
+    // Keep whitespace inside week brackets because the source uses values like
+    // [1 4-12] and [2-4双 5]. Whitespace outside brackets is display noise.
+    let inWeekBracket = false;
+    let normalized = '';
+    const text = scheduleString.replace(/\r?\n+/g, ',');
+
+    for (const char of text) {
+        if (char === '[' || char === '【') {
+            inWeekBracket = true;
+            normalized += '[';
+            continue;
+        }
+        if (char === ']' || char === '】') {
+            inWeekBracket = false;
+            normalized += ']';
+            continue;
+        }
+        if (!inWeekBracket && /\s/.test(char)) {
+            continue;
+        }
+        normalized += char;
+    }
+
+    return normalized
+        .replace(/,+/g, ',')
+        .replace(/^,|,$/g, '');
+}
+
 // 读取CSV（支持多行单元格：按引号配对拼接行）
 function readCSVRecords(filePath) {
     const raw = fs.readFileSync(filePath, 'utf8');
@@ -69,10 +100,10 @@ function readCSVRecords(filePath) {
 
 // 首选当前学期CSV文件名，找不到则回退到旧文件
 console.log('开始读取CSV文件...');
-const candidateFiles = ['26春课表.csv', '2025秋课表.csv', 'source.csv'];
+const candidateFiles = ['2026秋课表.csv', '26春课表.csv', '2025秋课表.csv', 'source.csv'];
 let inputFile = candidateFiles.find(f => fs.existsSync(f));
 if (!inputFile) {
-    console.error('未找到可用的CSV文件：26春课表.csv / 2025秋课表.csv / source.csv');
+    console.error('未找到可用的CSV文件：2026秋课表.csv / 26春课表.csv / 2025秋课表.csv / source.csv');
     process.exit(1);
 }
 console.log(`使用文件: ${inputFile}`);
@@ -157,12 +188,8 @@ for (let i = headerIndex + 1; i < rows.length; i++) {
 
     const rawSchedule = row[COL.schedule] || '';
     // CSV 中“排课信息”字段经常包含换行（在引号内），属于合法 CSV 表达；
-    // 为了便于后续解析与显示，将换行统一成逗号分隔，再去掉空白字符。
-    const normalizedSchedule = rawSchedule
-        .replace(/\r?\n+/g, ',')
-        .replace(/\s+/g, '')
-        .replace(/,+/g, ',')
-        .replace(/^,|,$/g, '');
+    // 为了便于后续解析与显示，将换行统一成逗号分隔，并只移除括号外空白。
+    const normalizedSchedule = normalizeScheduleString(rawSchedule);
     const parsedTimeSlots = parseScheduleTimeSlots(normalizedSchedule);
     parsedTimeSlots.forEach(slot => allTimeSlots.add(slot));
 

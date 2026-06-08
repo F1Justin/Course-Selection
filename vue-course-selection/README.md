@@ -56,6 +56,7 @@ npm run preview
 
 - `public/data/courses.json`: 包含所有课程信息的详细数据
 - `public/data/filters.json`: 包含筛选选项数据，如课程性质、校区、开课学院等列表
+- `public/data/timeSlots.json`: 包含全量课程节次范围集合
 
 ## 部署
 
