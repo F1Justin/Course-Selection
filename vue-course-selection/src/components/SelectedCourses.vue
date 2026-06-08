@@ -31,7 +31,7 @@
             </div>
             <div class="actions">
               <Button label="退选" severity="danger" size="small" @click="remove(c.courseId)" />
-              <Button label="查看课程评价" icon="pi pi-external-link" size="small" outlined @click="openReview(c.courseName)" />
+              <Button label="查看课程评价" icon="pi pi-external-link" size="small" outlined @click="openReview(c)" />
             </div>
           </li>
         </ul>
@@ -62,8 +62,8 @@ function remove(courseId) {
   courseStore.deselectCourse(courseId);
 }
 
-function openReview(courseName) {
-  const url = `https://1.tongji.icu/search?q=${encodeURIComponent(courseName || '')}`;
+function openReview(course) {
+  const url = `https://xk.yourtj.de/?q=${encodeURIComponent(course?.courseId || course?.courseName || '')}`;
   window.open(url, '_blank');
 }
 
@@ -180,5 +180,4 @@ function openDetail(event, text, title) {
   line-height: 1.5;
 }
 </style>
-
 

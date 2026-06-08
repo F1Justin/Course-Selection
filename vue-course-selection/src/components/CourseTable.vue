@@ -55,7 +55,7 @@
           <Column field="courseName" header="课程名称" style="width: 12%">
             <template #body="slotProps">
               <a
-                :href="`https://1.tongji.icu/search?q=${encodeURIComponent(slotProps.data.courseName)}`"
+                :href="getCourseReviewUrl(slotProps.data)"
                 target="_blank"
                 class="p-link clamped-text"
               >
@@ -190,6 +190,10 @@ function wouldConflict(courseId) {
 
 function onToggle(courseId) {
   courseStore.toggleCourseSelection(courseId);
+}
+
+function getCourseReviewUrl(course) {
+  return `https://xk.yourtj.de/?q=${encodeURIComponent(course?.courseId || course?.courseName || '')}`;
 }
 
 // 长文本弹出
